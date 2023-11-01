@@ -24,13 +24,13 @@ create_dir <- function(root_path,verbo = T) {
 #######################################
 # suppplement statistic function
 #######################################
-Mode <- function(x){
+Mode <- function(x, na.rm=T){
     # Mode函数用于计算众数
     # 输入参数:
     #   - x: 一个向量或数据框的列，用于计算众数
     # 输出:
     #   - 众数的值，类型为字符
-    x <- na.omit(x)
+    if(na.rm == T) x <- na.omit(x)
     x <- as.character(x)
     tab <- table(x, useNA = "no")
     r <- names(tab)[which.max(tab)]
@@ -204,7 +204,12 @@ get_type <- function(stat) {
 # resampling
 #######################################
 
-resample_data_wide <- function(df, itemid_list, type_list, time_list, time_col1, time_col2, time_window, keepNArow=F, keep_first=T) {
+agg_f_dict <- list("mean" = mean, "sum" = sum, "mode" = Mode, "min" = min, "max" = max, "median" = median)
+get_agg_f <- function(fn){
+    return(agg_f_dict[[fn]])
+}
+
+resample_data_wide <- function(df, itemid_list, type_list, agg_f_list, time_list, time_col1, time_col2, time_window, keepNArow=F, keep_first=T) {
 
     Colnames <- c("time", "keep", itemid_list)
     
@@ -217,18 +222,18 @@ resample_data_wide <- function(df, itemid_list, type_list, time_list, time_col1,
 
         ds_cur <- df[ind_time, ]
 
-        cur_x <- mapply(function(itemid, type) {
+        cur_x <- mapply(function(itemid, type, agg_f) {
                             x<-ds_cur[[itemid]]
                             if (type == "num") {
                                 x<-as.numeric(x)
-                                return(median(x, na.rm=T))
+                                return(get_agg_f(agg_f)(x, na.rm=T))
                             } else if (type %in% c("cat","ord")){
-                                return(Mode(na.omit(x)))
+                                return(get_agg_f(agg_f)(na.omit(x)))
                             } else if (type == "bin"){
                                 x<-as.numeric(x)
                                 return(ifelse(sum(x,na.rm = T)>=1,1,0))
                             }
-                            }, itemid_list, type_list ,SIMPLIFY = T) %>% unlist
+                            }, itemid_list, type_list, agg_f_list, SIMPLIFY = T) %>% unlist
 
         return(c("1", cur_x))
 
@@ -259,7 +264,7 @@ resample_data_wide <- function(df, itemid_list, type_list, time_list, time_col1,
     return(mat)
 }
 
-resample_data_long <- function(df,itemid_list, type_list, time_list, itemid_col, value_col, time_col1, time_col2, time_window, keepNArow=F, keep_first=T) {
+resample_data_long <- function(df,itemid_list, type_list, time_list, agg_f_list, itemid_col, value_col, time_col1, time_col2, time_window, keepNArow=F, keep_first=T) {
 
     Colnames <- c("time", "keep", itemid_list)
     
@@ -272,19 +277,19 @@ resample_data_long <- function(df,itemid_list, type_list, time_list, itemid_col,
 
         ds_cur <- df[ind_time, ]
 
-        cur_x <- mapply(function(itemid, type) {
+        cur_x <- mapply(function(itemid, type, agg_f) {
                             ind <- which(ds_cur[[itemid_col]] == itemid)
                             x<-ds_cur[[value_col]][ind]
                             if (type == "num") {
                                 x<-as.numeric(x)
-                                return(median(x, na.rm=T))
+                                return(get_agg_f(agg_f)(x, na.rm=T))
                             } else if (type %in% c("cat","ord")){
-                                return(Mode(na.omit(x)))
+                                return(get_agg_f(agg_f)(na.omit(x)))
                             } else if (type == "bin"){
                                 x<-as.numeric(x)
                                 return(ifelse(sum(x,na.rm = T)>=1,1,0))
                             }
-                            }, itemid_list, type_list ,SIMPLIFY = T) %>% unlist
+                            }, itemid_list, type_list, agg_f_list, SIMPLIFY = T) %>% unlist
 
         return(c("1", cur_x))
 
@@ -315,7 +320,7 @@ resample_data_long <- function(df,itemid_list, type_list, time_list, itemid_col,
     return(mat)
 }
 
-resample_process_wide <- function(df,itemid_list, type_list, time_list, time_col1, time_col2, time_window, keepNArow=F, keep_first=T) {
+resample_process_wide <- function(df,itemid_list, type_list, agg_f_list, time_list, time_col1, time_col2, time_window, keepNArow=F, keep_first=T) {
 
     Colnames <- c("time", "keep", itemid_list)
     
@@ -338,20 +343,20 @@ resample_process_wide <- function(df,itemid_list, type_list, time_list, time_col
     # 计算比例
     ds_cur$proportion <- overlap / total
 
-    cur_x <- mapply(function(itemid, type) {
+    cur_x <- mapply(function(itemid, type, agg_f) {
         x<-ds_cur[[itemid]]
             if (type == "num") {
                 x<-as.numeric(x)
                 x<-x*ds_cur$proportion
-                return(median(x, na.rm=T))
+                return(get_agg_f(agg_f)(x, na.rm=T))
             } else if (type %in% c("cat","ord")){
                 x<-as.character(x)
-                return(Mode(x))
+                return(get_agg_f(agg_f)(na.omit(x)))
             } else if (type == "bin") {
                 x<-as.numeric(x)
                 return(ifelse(sum(x,na.rm = T)>=1,1,0))
             }
-        }, itemid_list, type_list ,SIMPLIFY = T) %>% unlist
+        }, itemid_list, type_list, agg_f_list, SIMPLIFY = T) %>% unlist
 
         return(c("1", cur_x))
     }) %>% do.call(rbind, .)
@@ -381,7 +386,7 @@ resample_process_wide <- function(df,itemid_list, type_list, time_list, time_col
 
 }
 
-resample_process_long <- function(df,itemid_list, type_list, time_list, itemid_col, value_col, time_col1, time_col2, time_window, keepNArow=F, keep_first=T) {
+resample_process_long <- function(df,itemid_list, type_list, agg_f_list, time_list, itemid_col, value_col, time_col1, time_col2, time_window, keepNArow=F, keep_first=T) {
 
     Colnames <- c("time", "keep", itemid_list)
     
@@ -404,21 +409,21 @@ resample_process_long <- function(df,itemid_list, type_list, time_list, itemid_c
     # 计算比例
     ds_cur$proportion <- overlap / total
 
-    cur_x <- mapply(function(itemid, type) {
+    cur_x <- mapply(function(itemid, type, agg_f) {
                         ind <- which(ds_cur[[itemid_col]] == itemid)
                         x<-ds_cur[[value_col]][ind]
                             if (type == "num") {
                                 x<-as.numeric(x)
                                 x<-x*ds_cur$proportion
-                                return(median(x, na.rm=T))
+                                return(get_agg_f(agg_f)(x, na.rm=T))
                             } else if (type %in% c("cat","ord")){
                                 x<-as.character(x)
-                                return(Mode(x))
+                                return(get_agg_f(agg_f)(x))
                             } else if (type == "bin"){
                                 x<-as.numeric(x)
                                 return(ifelse(sum(x,na.rm = T)>=1,1,0))
                             }
-                        }, itemid_list, type_list ,SIMPLIFY = T) %>% unlist
+                        }, itemid_list, type_list, agg_f_list, SIMPLIFY = T) %>% unlist
 
         return(c("1", cur_x))
     }) %>% do.call(rbind, .)

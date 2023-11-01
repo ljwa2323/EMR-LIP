@@ -189,6 +189,7 @@ names(sofa)
 cols_sofa<-names(sofa)[c(30)]
 fillf_sofa <- rep("locf", length(cols_sofa))
 fillf1_sofa <- rep("mean", length(cols_sofa))
+aggf_sofa <- rep("median", length(cols_sofa))
 stat_sofa <- get_stat_wide(sofa, cols_sofa, type_list = rep("num",length(cols_sofa)))
 get_type(stat_sofa)
 
@@ -208,6 +209,7 @@ names(bg)[c(5:8,11:27)] <- paste0(names(bg)[c(5:8,11:27)],"_bg")
 cols_bg<-names(bg)[c(5:8,11:27)]
 fillf_bg <- rep("locf", length(cols_bg))
 fillf1_bg <- rep("mean", length(cols_bg))
+aggf_bg <- rep("median", length(cols_bg))
 stat_bg <- get_stat_wide(bg, cols_bg, type_list = rep("num",length(cols_bg)))
 get_type(stat_bg)
 bg <- remove_extreme_value_wide(bg, cols_bg, get_type(stat_bg), names(bg)[c(2,1,29)])
@@ -230,6 +232,7 @@ names(chemistry)[c(5:16)] <- paste0(names(chemistry)[c(5:16)], "_chemistry")
 cols_chem<-names(chemistry)[c(5:16)]
 fillf_chem <- rep("locf", length(cols_chem))
 fillf1_chem <- rep("mean", length(cols_chem))
+aggf_chem <- rep("median", length(cols_chem))
 stat_chemistry <- get_stat_wide(chemistry,cols_chem, rep("num", length(cols_chem)))
 get_type(stat_chemistry)
 chemistry <- remove_extreme_value_wide(chemistry, cols_chem, get_type(stat_chemistry),
@@ -256,6 +259,7 @@ names(vitalsign)[c(5:13,15:16)] <- paste0(names(vitalsign)[c(5:13,15:16)], "_vit
 cols_vit <- names(vitalsign)[c(5:13,15:16)]
 fillf_vit <- rep("locf", length(cols_vit))
 fillf1_vit <- rep("mean", length(cols_vit))
+aggf_vit <- rep("median", length(cols_vit))
 stat_vital <- get_stat_wide(vitalsign, cols_vit, rep("num", length(cols_vit)))
 vitalsign <- remove_extreme_value_wide(vitalsign, cols_vit, get_type(stat_vital), cols_keep = names(vitalsign)[c(2,1,18)])
 get_type(stat_vital)
@@ -282,6 +286,7 @@ gcs <- gcs %>% mutate(
 cols_gcs <- names(gcs)[c(6:8)]
 fillf_gcs <- rep("locf", length(cols_gcs))
 fillf1_gcs <- rep("mean", length(cols_gcs))
+aggf_gcs <- rep("median", length(cols_gcs))
 stat_gcs <- get_stat_wide(gcs, cols_gcs, rep("ord", length(cols_gcs)))
 get_type(stat_gcs)
 
@@ -306,6 +311,7 @@ names(ventilation)
 cols_vent<- names(ventilation)[c(5)]
 fillf_vent <- rep("zero", length(cols_vent))
 fillf1_vent <- rep("zero", length(cols_vent))
+aggf_vent <- rep("mode", length(cols_vent))
 stat_vent <- get_stat_wide(ventilation, cols_vent, rep("cat", length(cols_vent)))
 get_type(stat_vent)
 
@@ -329,6 +335,7 @@ names(vasoactive_agent)
 cols_vaso <- names(vasoactive_agent)[c(5:11)]
 fillf_vaso <- rep("zero", length(cols_vaso))
 fillf1_vaso <- rep("zero", length(cols_vaso))
+aggf_vaso <- rep("sum", length(cols_vaso))
 stat_vaso <- get_stat_wide(vasoactive_agent, cols_vaso, rep("num", length(cols_vaso)))
 vasoactive_agent <- remove_extreme_value_wide(vasoactive_agent, cols_vaso, get_type(stat_vaso), names(vasoactive_agent)[c(1,2,3,4,13,14,15)], neg_valid = F)
 get_type(stat_vaso)
@@ -350,6 +357,7 @@ names(complete_blood_count)
 cols_cbc <- names(complete_blood_count)[c(5:14)]
 fillf_cbc <- rep("locf", length(cols_cbc))
 fillf1_cbc <- rep("mean", length(cols_cbc))
+aggf_cbc <- rep("median", length(cols_cbc))
 stat_cbc <- get_stat_wide(complete_blood_count, cols_cbc, rep("num", length(cols_cbc)))
 complete_blood_count <- remove_extreme_value_wide(complete_blood_count, cols_cbc, get_type(stat_cbc), names(complete_blood_count)[c(2,1,16)])
 get_type(stat_cbc)
@@ -374,6 +382,7 @@ names(coagulation)[c(5:10)] <- paste0(names(coagulation)[c(5:10)], "_coag")
 cols_coag <- names(coagulation)[c(5:10)]
 fillf_coag <- rep("locf", length(cols_coag))
 fillf1_coag <- rep("mean", length(cols_coag))
+aggf_coag <- rep("median", length(cols_coag))
 stat_coag <- get_stat_wide(coagulation, cols_coag, rep("num", length(cols_coag)))
 coagulation <- remove_extreme_value_wide(coagulation, cols_coag, get_type(stat_coag), names(coagulation)[c(2,1,12)])
 get_type(stat_coag)
@@ -397,6 +406,7 @@ names(urine_output)
 cols_uo <- names(urine_output)[c(4)]
 fillf_uo <- rep("zero", length(cols_uo))
 fillf1_uo <- rep("zero", length(cols_uo))
+aggf_uo <- rep("sum", length(cols_uo))
 stat_uo <- get_stat_wide(urine_output, cols_uo, rep("num", length(cols_uo)))
 urine_output <- remove_extreme_value_wide(urine_output, cols_uo, get_type(stat_uo), names(urine_output)[c(2,1,7)])
 get_type(stat_uo)
@@ -422,6 +432,7 @@ names(blood_differential)[c(5:20)] <- paste0(names(blood_differential)[c(5:20)],
 cols_bd <- names(blood_differential)[c(5:20)]
 fillf_bd <- rep("locf", length(cols_bd))
 fillf1_bd <- rep("mean", length(cols_bd))
+aggf_bd <- rep("median", length(cols_bd))
 stat_bd <- get_stat_wide(blood_differential, cols_bd, rep("num", length(cols_bd)))
 blood_differential <- remove_extreme_value_wide(blood_differential, cols_bd, get_type(stat_bd), names(blood_differential)[c(2,1,23)])
 get_type(stat_bd)
@@ -465,6 +476,7 @@ names(enzyme)[c(5:15)] <- paste0(names(enzyme)[c(5:15)], "_enzyme")
 cols_enzyme <- names(enzyme)[c(5:15)]
 fillf_enzyme <- rep("locf", length(cols_enzyme))
 fillf1_enzyme <- rep("mean", length(cols_enzyme))
+aggf_enzyme <- rep("median", length(cols_enzyme))
 stat_enzyme <- get_stat_wide(enzyme, cols_enzyme, c(rep("num",length(cols_enzyme))))
 enzyme <- remove_extreme_value_wide(enzyme, cols_enzyme, get_type(stat_enzyme), names(enzyme)[c(2,1,18)])
 get_type(stat_enzyme)
@@ -508,6 +520,7 @@ get_1hadmid <- function(k) {
   bg_k1 <- resample_data_wide(bg_k, 
                               cols_bg,
                               get_type(stat_bg),
+							  aggf_bg,
                               time_range, 
                               time_col1 = "charttime_r", 
                               time_col2 = "timecol2",
@@ -519,6 +532,7 @@ get_1hadmid <- function(k) {
   chemistry_k1 <- resample_data_wide(chemistry_k, 
                                      cols_chem,
                                      get_type(stat_chemistry),
+									 aggf_chem,
                                      time_range, 
                                      time_col1 = "charttime_r", 
                                      time_col2 = "timecol2",
@@ -530,6 +544,7 @@ get_1hadmid <- function(k) {
   complete_blood_count_k1 <- resample_data_wide(complete_blood_count_k, 
                               cols_cbc,
                               get_type(stat_cbc),
+							  aggf_cbc,
                               time_range, 
                               time_col1 = "charttime_r", 
                               time_col2 = "timecol2",
@@ -541,6 +556,7 @@ get_1hadmid <- function(k) {
   coagulation_k1 <- resample_data_wide(coagulation_k, 
                               cols_coag,
                               get_type(stat_coag),
+							  aggf_coag,
                               time_range, 
                               time_col1 = "charttime_r", 
                               time_col2 = "timecol2",
@@ -552,6 +568,7 @@ get_1hadmid <- function(k) {
   blood_differential_k1 <- resample_data_wide(blood_differential_k, 
                               cols_bd,
                               get_type(stat_bd),
+							  aggf_bd,
                               time_range, 
                               time_col1 = "charttime_r", 
                               time_col2 = "timecol2",
@@ -563,6 +580,7 @@ get_1hadmid <- function(k) {
   enzyme_k1 <- resample_data_wide(enzyme_k, 
                               cols_enzyme,
                               get_type(stat_enzyme),
+							  aggf_enzyme,
                               time_range, 
                               time_col1 = "charttime_r", 
                               time_col2 = "timecol2",
@@ -603,6 +621,7 @@ get_1hadmid <- function(k) {
   vitalsign_k1 <- resample_data_wide(vitalsign_k, 
                                      cols_vit,
                                      get_type(stat_vital),
+									 aggf_vit,
                                      time_range, 
                                      time_col1 = "charttime_r", 
                                      time_col2 = "timecol2",
@@ -614,6 +633,7 @@ get_1hadmid <- function(k) {
   gcs_k1 <- resample_data_wide(gcs_k, 
                               cols_gcs,
                               get_type(stat_gcs),
+							  aggf_gcs,
                               time_range, 
                               time_col1 = "charttime_r", 
                               time_col2 = "timecol2",
@@ -624,6 +644,7 @@ get_1hadmid <- function(k) {
   urine_output_k1 <- resample_data_wide(urine_output_k, 
                               cols_uo,
                               get_type(stat_uo),
+							  aggf_uo,
                               time_range, 
                               time_col1 = "charttime_r", 
                               time_col2 = "timecol2",
@@ -659,6 +680,7 @@ get_1hadmid <- function(k) {
   ventilation_k1 <- resample_process_wide(ventilation_k, 
                               cols_vent,
                               get_type(stat_vent),
+							  aggf_vent,
                               time_range, 
                               time_col1 = "starttime_r", 
                               time_col2 = "endtime_r",
@@ -669,6 +691,7 @@ get_1hadmid <- function(k) {
   vasoactive_agent_k1 <- resample_process_wide(vasoactive_agent_k, 
                               cols_vaso,
                               get_type(stat_vaso),
+							  aggf_vaso,
                               time_range, 
                               time_col1 = "starttime_r", 
                               time_col2 = "endtime_r",

@@ -154,6 +154,7 @@ names(bg)[c(3:10)] <- paste0(names(bg)[c(3:10)],"_bg")
 cols_bg<-names(bg)[c(3:10)]
 fillf_bg <- rep("locf", length(cols_bg))
 fillf1_bg <- rep("mean", length(cols_bg))
+aggf_bg <- rep("median", length(cols_bg))
 stat_bg <- get_stat_wide(bg, cols_bg, type_list = rep("num",length(cols_bg)))
 get_type(stat_bg)
 bg <- remove_extreme_value_wide(bg, cols_bg, get_type(stat_bg), names(bg)[c(11,2,13)])
@@ -178,6 +179,7 @@ names(lab)[c(3:24)] <- paste0(names(lab)[c(3:24)], "_lab")
 cols_lab<-names(lab)[c(3:24)]
 fillf_lab <- rep("locf", length(cols_lab))
 fillf1_lab <- rep("mean", length(cols_lab))
+aggf_lab <- rep("median", length(cols_lab))
 stat_lab <- get_stat_wide(lab,cols_lab, rep("num", length(cols_lab)))
 get_type(stat_lab)
 lab <- remove_extreme_value_wide(lab, cols_lab, get_type(stat_lab),
@@ -203,6 +205,7 @@ names(vitalsign)[c(4:10,12:14)] <- paste0(names(vitalsign)[c(4:10,12:14)], "_vit
 cols_vit <- names(vitalsign)[c(4:10,12:14)]
 fillf_vit <- rep("locf", length(cols_vit))
 fillf1_vit <- rep("mean", length(cols_vit))
+aggf_vit <- rep("median", length(cols_vit))
 stat_vital <- get_stat_wide(vitalsign, cols_vit, rep("num", length(cols_vit)))
 vitalsign <- remove_extreme_value_wide(vitalsign, cols_vit, get_type(stat_vital), cols_keep = names(vitalsign)[c(15,2,17)])
 get_type(stat_vital)
@@ -227,6 +230,7 @@ names(med)[c(5:13)] <- paste0(names(med)[c(5:13)], "_med")
 cols_med <- names(med)[c(5:13)]
 fillf_med <- rep("zero", length(cols_med))
 fillf1_med <- rep("zero", length(cols_med))
+aggf_med <- rep("mean", length(cols_med))
 stat_med <- get_stat_wide(med, cols_med, rep("bin", length(cols_med)))
 med <- remove_extreme_value_wide(med, cols_med, get_type(stat_med), cols_keep = names(med)[c(14,3,4,16,17)])
 get_type(stat_med)
@@ -251,6 +255,7 @@ names(uo)[c(3)] <- paste0(names(uo)[c(3)], "_uo")
 cols_uo <- names(uo)[c(3)]
 fillf_uo <- rep("zero", length(cols_uo))
 fillf1_uo <- rep("zero", length(cols_uo))
+aggf_uo <- rep("sum", length(cols_uo))
 stat_uo <- get_stat_wide(uo, cols_uo, rep("num", length(cols_uo)))
 uo <- remove_extreme_value_wide(uo, cols_uo, get_type(stat_uo), cols_keep = names(uo)[c(5,2,7)])
 get_type(stat_uo)
@@ -274,6 +279,7 @@ names(oxy)[c(4)] <- paste0(names(oxy)[c(4)], "_oxy")
 cols_oxy <- names(oxy)[c(4)]
 fillf_oxy <- rep("zero", length(cols_oxy))
 fillf1_oxy <- rep("zero", length(cols_oxy))
+aggf_oxy <- rep("sum", length(cols_oxy))
 stat_oxy <- get_stat_wide(oxy, cols_oxy, rep("num", length(cols_oxy)))
 oxy <- remove_extreme_value_wide(oxy, cols_oxy, get_type(stat_oxy), cols_keep = names(oxy)[c(7,2,9)])
 get_type(stat_oxy)
@@ -298,6 +304,7 @@ names(gcs)[c(3)] <- paste0(names(gcs)[c(3)], "_gcs")
 cols_gcs <- names(gcs)[c(3)]
 fillf_gcs <- rep("locf", length(cols_gcs))
 fillf1_gcs <- rep("mean", length(cols_gcs))
+aggf_gcs <- rep("median", length(cols_gcs))
 stat_gcs <- get_stat_wide(gcs, cols_gcs, rep("ord", length(cols_gcs)))
 gcs <- remove_extreme_value_wide(gcs, cols_gcs, get_type(stat_gcs), cols_keep = names(gcs)[c(7,2,9)])
 get_type(stat_gcs)
@@ -342,6 +349,7 @@ get_1hadmid_allAlign <- function(k) {
   bg_k1 <- resample_data_wide(bg_k, 
                               cols_bg,
                               get_type(stat_bg),
+							  aggf_bg,
                               time_range, 
                               time_col1 = "chartoffset_r", 
                               time_col2 = "timecol2",
@@ -353,6 +361,7 @@ get_1hadmid_allAlign <- function(k) {
   lab_k1 <- resample_data_wide(lab_k, 
                                 cols_lab,
                                 get_type(stat_lab),
+								aggf_lab,
                                 time_range, 
                                 time_col1 = "chartoffset_r", 
                                 time_col2 = "timecol2",
@@ -381,6 +390,7 @@ get_1hadmid_allAlign <- function(k) {
   gcs_k1 <- resample_data_wide(gcs_k, 
                               cols_gcs,
                               get_type(stat_gcs),
+							  aggf_gcs,
                               time_range, 
                               time_col1 = "chartoffset_r", 
                               time_col2 = "timecol2",
@@ -392,6 +402,7 @@ get_1hadmid_allAlign <- function(k) {
   uo_k1 <- resample_data_wide(uo_k, 
                               cols_uo,
                               get_type(stat_uo),
+							  aggf_uo,
                               time_range, 
                               time_col1 = "chartoffset_r", 
                               time_col2 = "timecol2",
@@ -409,6 +420,7 @@ get_1hadmid_allAlign <- function(k) {
   med_k1 <- resample_process_wide(med_k, 
                               cols_med,
                               get_type(stat_med),
+							  aggf_med,
                               time_range, 
                               time_col1 = "chartoffset_r", 
                               time_col2 = "drugstopoffset_r",
@@ -420,6 +432,7 @@ get_1hadmid_allAlign <- function(k) {
   oxy_k1 <- resample_data_wide(oxy_k,
                               cols_oxy,
                               get_type(stat_oxy),
+							  aggf_oxy,
                               time_range, 
                               time_col1 = "chartoffset_r", 
                               time_col2 = "timecol2",
