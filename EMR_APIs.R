@@ -454,57 +454,6 @@ resample_process_long <- function(df,itemid_list, type_list, agg_f_list, time_li
 
 }
 
-resample_binary_long <- function(df, itemid_list, time_list, itemid_col, time_col1, time_col2, time_window, keepNArow=F, keep_first=T) {
-    # resample_binary函数用于对二进制变量进行重采样
-    # 输入参数:
-    #   - df: 数据框，包含需要重采样的数据
-    #   - itemid_list: 字符串向量，表示需要重采样的变量的ID列表
-    #   - time_col1: 字符串，表示数据框中的列名，用于指定起始时间
-    #   - time_col2: 字符串，表示数据框中的列名，用于指定结束时间
-    #   - time_list: 数值向量，表示需要重采样的时间点列表
-    #   - time_window: 数值，表示重采样的时间窗口大小
-    # 输出:
-    #   - 重采样后的矩阵，包含时间和各个变量的值，类型为矩阵
-    Colnames <- c("time", as.character(itemid_list))
-    mat <- lapply(time_list, function(cur_t) {
-        ind_time<-which(((is.na(df[[time_col2]]) & df[[time_col1]] >= (cur_t - time_window/2) & df[[time_col1]] <= (cur_t + time_window/2)) |
-                (!is.na(df[[time_col2]]) & (df[[time_col1]] <= (cur_t + time_window/2) & df[[time_col2]] >= (cur_t - time_window/2)))))
-        if(length(ind_time) == 0) return(c("0", rep(NA, length(itemid_list))))
-        ds_cur <- df[ind_time, ]
-
-        cur_x <- mapply(function(itemid){
-            ind<-which(ds_cur[[itemid_col]]==itemid)
-            if(length(ind) > 0) return(1) else {return(0)}
-        }, itemid_list, SIMPLIFY = T) %>% unlist
-
-        return(c("1", cur_x))
-
-    }) %>% do.call(rbind, .)
-
-    # 检查 mat 是否是一个矩阵，如果不是，就将其转换为一个矩阵
-    if (!is.matrix(mat)) {
-        mat <- matrix(mat, ncol = length(itemid_list), byrow=T)
-    }
-
-    mat[1,1] <- "1"
-
-    if(!keepNArow) {
-        ind_mat<-which(mat[,1]=="1")
-        mat <- rbind(cbind(time_list, mat)[ind_mat,])
-    } else{
-        mat <- rbind(cbind(time_list, mat))
-    }
-
-    if(!keep_first){
-        if (nrow(mat) > 1 && all(is.na(mat[1,3:ncol(mat),drop=T]))) {
-            mat<-mat[-1,,drop=F]
-        }
-    }
-
-    colnames(mat) <- Colnames
-    return(mat)
-}
-
 #######################################
 # One hot
 #######################################
