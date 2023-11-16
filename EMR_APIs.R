@@ -508,7 +508,7 @@ rev_onehot <- function(mat1, col_list, time_col, type_list, stats){
         cur <- 1
         x1 <- list()
         for(i in 1:length(num_list)){
-            if(type_list[i] %in% c("num","ord")){
+            if(type_list[i] %in% c("num","ord","bin")){
                 y <- x[cur]
                 cur <- cur+1
                 x1[[i]] <- y

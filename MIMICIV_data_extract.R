@@ -621,7 +621,7 @@ get_1hadmid <- function(k) {
   vitalsign_k1 <- resample_data_wide(vitalsign_k, 
                                      cols_vit,
                                      get_type(stat_vital),
-									 aggf_vit,
+									                   aggf_vit,
                                      time_range, 
                                      time_col1 = "charttime_r", 
                                      time_col2 = "timecol2",
@@ -691,7 +691,7 @@ get_1hadmid <- function(k) {
   vasoactive_agent_k1 <- resample_process_wide(vasoactive_agent_k, 
                               cols_vaso,
                               get_type(stat_vaso),
-							  aggf_vaso,
+							                aggf_vaso,
                               time_range, 
                               time_col1 = "starttime_r", 
                               time_col2 = "endtime_r",
@@ -1021,8 +1021,6 @@ valid_set <- remaining_set[-partition, ]
 fwrite(train_set, file="/home/luojiawei/Benchmark_project_data/mimiciv_data/train_set.csv", row.names=F)
 fwrite(test_set, file="/home/luojiawei/Benchmark_project_data/mimiciv_data/test_set.csv", row.names=F)
 fwrite(valid_set, file="/home/luojiawei/Benchmark_project_data/mimiciv_data/valid_set.csv", row.names=F)
-
-
 
 
 admissions <- fread("/home/luojiawei/Benchmark_project_data/mimiciv_data/admissions.csv", header=T)
