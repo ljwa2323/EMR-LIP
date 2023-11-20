@@ -30,10 +30,11 @@ Mode <- function(x, na.rm=T){
     #   - x: 一个向量或数据框的列，用于计算众数
     # 输出:
     #   - 众数的值，类型为字符
-    if(na.rm == T) x <- na.omit(x)
+    if(na.rm) x <- na.omit(x)
     x <- as.character(x)
     tab <- table(x, useNA = "no")
-    r <- names(tab)[which.max(tab)]
+    max_freq <- max(tab)
+    r <- names(tab)[tab == max_freq]
     if (length(r) == 0) return(NA) else return(r)
 }
 
@@ -204,7 +205,30 @@ get_type <- function(stat) {
 # resampling
 #######################################
 
-agg_f_dict <- list("mean" = mean, "sum" = sum, "mode" = Mode, "min" = min, "max" = max, "median" = median)
+get_first <- function(x, na.rm=T){
+    if(na.rm) {
+        x <- na.omit(x)
+    }
+    if(length(x) > 0) {
+        return(head(x, 1))
+    } else {
+        return(NA)
+    }
+}
+
+get_last <- function(x, na.rm=T){
+    if(na.rm) {
+        x <- na.omit(x)
+    }
+    if(length(x) > 0) {
+        return(tail(x, 1))
+    } else {
+        return(NA)
+    }
+}
+
+
+agg_f_dict <- list("mean" = mean, "sum" = sum, "mode" = Mode, "min" = min, "max" = max, "median" = median, "first" = get_first, "last" = get_last)
 get_agg_f <- function(fn){
     return(agg_f_dict[[fn]])
 }
@@ -264,7 +288,7 @@ resample_data_wide <- function(df, itemid_list, type_list, agg_f_list, time_list
     return(mat)
 }
 
-resample_data_long <- function(df,itemid_list, type_list, time_list, agg_f_list, itemid_col, value_col, time_col1, time_col2, time_window, keepNArow=F, keep_first=T) {
+resample_data_long <- function(df,itemid_list, type_list, agg_f_list, time_list, itemid_col, value_col, time_col1, time_col2, time_window, keepNArow=F, keep_first=T) {
 
     Colnames <- c("time", "keep", itemid_list)
     
@@ -452,6 +476,57 @@ resample_process_long <- function(df,itemid_list, type_list, agg_f_list, time_li
 
     return(mat)
 
+}
+
+resample_binary_long <- function(df, itemid_list, time_list, itemid_col, time_col1, time_col2, time_window, keepNArow=F, keep_first=T) {
+    # resample_binary函数用于对二进制变量进行重采样
+    # 输入参数:
+    #   - df: 数据框，包含需要重采样的数据
+    #   - itemid_list: 字符串向量，表示需要重采样的变量的ID列表
+    #   - time_col1: 字符串，表示数据框中的列名，用于指定起始时间
+    #   - time_col2: 字符串，表示数据框中的列名，用于指定结束时间
+    #   - time_list: 数值向量，表示需要重采样的时间点列表
+    #   - time_window: 数值，表示重采样的时间窗口大小
+    # 输出:
+    #   - 重采样后的矩阵，包含时间和各个变量的值，类型为矩阵
+    Colnames <- c("time", as.character(itemid_list))
+    mat <- lapply(time_list, function(cur_t) {
+        ind_time<-which(((is.na(df[[time_col2]]) & df[[time_col1]] >= (cur_t - time_window/2) & df[[time_col1]] <= (cur_t + time_window/2)) |
+                (!is.na(df[[time_col2]]) & (df[[time_col1]] <= (cur_t + time_window/2) & df[[time_col2]] >= (cur_t - time_window/2)))))
+        if(length(ind_time) == 0) return(c("0", rep(NA, length(itemid_list))))
+        ds_cur <- df[ind_time, ]
+
+        cur_x <- mapply(function(itemid){
+            ind<-which(ds_cur[[itemid_col]]==itemid)
+            if(length(ind) > 0) return(1) else {return(0)}
+        }, itemid_list, SIMPLIFY = T) %>% unlist
+
+        return(c("1", cur_x))
+
+    }) %>% do.call(rbind, .)
+
+    # 检查 mat 是否是一个矩阵，如果不是，就将其转换为一个矩阵
+    if (!is.matrix(mat)) {
+        mat <- matrix(mat, ncol = length(itemid_list), byrow=T)
+    }
+
+    mat[1,1] <- "1"
+
+    if(!keepNArow) {
+        ind_mat<-which(mat[,1]=="1")
+        mat <- rbind(cbind(time_list, mat)[ind_mat,])
+    } else{
+        mat <- rbind(cbind(time_list, mat))
+    }
+
+    if(!keep_first){
+        if (nrow(mat) > 1 && all(is.na(mat[1,3:ncol(mat),drop=T]))) {
+            mat<-mat[-1,,drop=F]
+        }
+    }
+
+    colnames(mat) <- Colnames
+    return(mat)
 }
 
 #######################################
@@ -893,16 +968,16 @@ remove_extreme_value_long <- function(df, itemid_list, type_list, itemid_col, va
     df_new <- mapply(function(i, itemid, type){
                         ind <- which(df[[itemid_col]] == itemid)
                         df_cur <- df[ind, ]
-                        if(type %in% c("num","ord")){
+                        if(type %in% c("num")){
                             x <- df_cur$value
                             # 将 x 中的值再 99% 以上的值设为NA
-                            x[x > quantile(x, 0.99, na.rm = TRUE)] <- NA
+                            x[x < quantile(x, 0.01, na.rm = TRUE) | x > quantile(x, 0.99, na.rm = TRUE)] <- NA
                             if(!neg_valid) {
                                 x[x<0] <- NA
                             }
                             df_cur$value <- x
                             return(df_cur)
-                        } else if(type %in% c("cat", "bin")){
+                        } else if(type %in% c("cat", "bin","ord")){
                             return(df_cur)
                         }
                     }, 1:length(itemid_list), itemid_list, type_list, SIMPLIFY = F) %>% do.call(rbind, .)
@@ -912,16 +987,16 @@ remove_extreme_value_long <- function(df, itemid_list, type_list, itemid_col, va
 remove_extreme_value_wide <- function(df, itemid_list, type_list, cols_keep, neg_valid=F){
 
     mat <- mapply(function(i, itemid, type){
-                        if(type %in% c("num","ord")){
+                        if(type %in% c("num")){
                             x <- df[[itemid]]
                             x <- as.numeric(x)
                             # 将 x 中的值再 99% 以上的值设为NA
-                            x[x > quantile(x, 0.99, na.rm = TRUE)] <- NA
+                            x[x < quantile(x, 0.01, na.rm = TRUE) | x > quantile(x, 0.99, na.rm = TRUE)] <- NA
                             if(!neg_valid) {
                                 x[x<0] <- NA
                             }
                             return(x)
-                        } else if(type %in% c("cat", "bin")){
+                        } else if(type %in% c("cat", "bin","ord")){
                             return(df[[itemid]])
                         }
                     }, 1:length(itemid_list), itemid_list, type_list, SIMPLIFY = F) %>% do.call(cbind, .)
@@ -953,6 +1028,13 @@ calculate_stats <- function(mat, col_list, type_list) {
             cat_col <- mat[, col]
             mode_val <- Mode(cat_col)
             stats <- c(stats, setNames(mode_val, paste(name_list[col], "_mode", sep = "")))
+        } else if (type  == "bin") {
+            bin_col <- as.numeric(mat[, col])
+            if (all(is.na(bin_col))) {
+                stats <- c(stats, setNames(NA, paste(name_list[col], "_mean", sep = "")))
+            } else {
+                stats <- c(stats, setNames(mean(bin_col, na.rm = TRUE), paste(name_list[col], "_mean", sep = "")))
+            }
         }
     }
     
