@@ -29,10 +29,10 @@ create_dir <- function(root_path,verbo = T) {
 #######################################
 Mode <- function(x, na.rm=T){
     # Mode函数用于计算众数
-    # 输入参数:
-    #   - x: 一个向量或数据框的列，用于计算众数
-    # 输出:
-    #   - 众数的值，类型为字符
+    # Input:
+    #   - x: A column of vectors or data frames used to calculate the mode
+    # Output:
+    #   - The value of the mode, which is of type character
     if(na.rm) x <- na.omit(x)
     x <- as.character(x)
     tab <- table(x, useNA = "no")
@@ -47,9 +47,9 @@ Mode_w <- function(x, w, na.rm=T){
         x <- x[!na_index]
         w <- w[!na_index]
     }
-    # 创建一个加权直方图
+    # Create a weighted histogram
     weighted_hist <- tapply(w, x, sum)
-    # 找到加权直方图中的最大值对应的x值
+    # Find the x value corresponding to the maximum value in the weighted histogram
     modes <- as.numeric(names(weighted_hist)[weighted_hist == max(weighted_hist)])
     if (length(modes) == 0) return(NA) else return(modes)
 }
@@ -60,7 +60,7 @@ mean_w <- function(x, w, na.rm=T){
         x <- x[!na_index]
         w <- w[!na_index]
     }
-    # 计算加权平均数
+    # Calculate the weighted average
     weighted_mean <- sum(x * w) / sum(w)
     return(weighted_mean)
 }
@@ -71,7 +71,7 @@ median_w <- function(x, w, na.rm=T){
         x <- x[!na_index]
         w <- w[!na_index]
     }
-    # 计算加权中位数
+    # Calculate the weighted median
     ord <- order(x)
     cw <- cumsum(w[ord])
     p <- cw / sum(w)
@@ -94,23 +94,23 @@ get_stat_wide <- function(df, itemid_list, type_list) {
 
             mean_obj <- mean(x, na.rm = TRUE)
 
-            # 如果 mean_obj 为 NA，就赋值为0
+            # If mean_obj is NA, the value is assigned to 0
             if (is.na(mean_obj)) {
                 mean_obj <- 0
             }
             
-            # 计算分位数
+            # Calculated quantile
             quantile_obj <- quantile(x, probs = seq(0, 1, 0.1), na.rm = TRUE)
-            # 如果 quantile_obj 全为 NA，则赋值为 全0
+            #If quantile_obj is all NA, the value is assigned to all zeros
             if (all(is.na(quantile_obj))) {
                 quantile_obj <- rep(0, length(quantile_obj))
             }
             
-            # 计算标准差
+            # Calculated standard deviation
             x_in_range <- x[x >= quantile_obj[2] & x <= quantile_obj[10]]
             sd_obj <- sd(x_in_range, na.rm = TRUE)
 
-            # 如果 sd_obj ==0 或 为 NA，就赋值为0.001
+            # If sd_obj ==0 or NA, the value is 0.001
             if (is.na(sd_obj) || sd_obj == 0) {
                 sd_obj <- 1
             }
@@ -118,17 +118,17 @@ get_stat_wide <- function(df, itemid_list, type_list) {
             return(list(type, mean_obj, sd_obj, quantile_obj))
 
         } else if (type == "cat") {
-            # 计算众数
+            # Computational mode
             x <- df[[itemid]]
             x <- as.character(x)
             mode_obj <- names(which.max(table(x, useNA = "no")))
 
             uniq_value <- sort(unique(na.omit(x)), decreasing = F)
 
-            # 计算所有可能取值的个数
+            # Count the number of all possible values
             unique_count <- length(uniq_value)
 
-            # 返回一个列表，包含2个对象
+            # Returns a list of 2 objects
             return(list(type, mode_obj, unique_count, uniq_value))
         } else if (type == "ord") {
 
@@ -137,10 +137,10 @@ get_stat_wide <- function(df, itemid_list, type_list) {
 
             mean_obj <- mean(x, na.rm = TRUE)
             
-            # 计算分位数
+            # Calculate quantile
             quantile_obj <- quantile(x, probs = seq(0, 1, 0.1), na.rm = TRUE)
 
-            # 计算标准差
+            # Calculate standard deviation
             if (abs(mean_obj - quantile_obj[6]) > 0.05 * min(mean_obj, quantile_obj[6])) {
                 x_in_range <- x[x >= quantile_obj[2] & x <= quantile_obj[10]]
                 sd_obj <- sd(x_in_range, na.rm = TRUE)
@@ -148,7 +148,7 @@ get_stat_wide <- function(df, itemid_list, type_list) {
                 sd_obj <- sd(x, na.rm = TRUE)
             }
 
-            # 如果 sd_obj ==0 或 为 NA，就赋值为0.001
+            # If sd_obj ==0 or NA, the value is 0.001
             if (is.na(sd_obj) || sd_obj == 0) {
                 sd_obj <- 1
             }
@@ -178,14 +178,14 @@ get_stat_long <- function(df, itemid_list, type_list, itemid_col, value_col) {
 
             mean_obj <- mean(x, na.rm = TRUE)
             
-            # 计算分位数
+            # Calculate quantile
             quantile_obj <- quantile(x, probs = seq(0, 1, 0.1), na.rm = TRUE)
 
-            # 计算标准差
+            # Calculate standard deviation
             x_in_range <- x[x >= quantile_obj[2] & x <= quantile_obj[10]]
             sd_obj <- sd(x_in_range, na.rm = TRUE)
 
-            # 如果 sd_obj ==0 或 为 NA，就赋值为0.001
+            # If sd_obj ==0 or NA, the value is 0.001
             if (is.na(sd_obj) || sd_obj == 0) {
                 sd_obj <- 1
             }
@@ -193,17 +193,17 @@ get_stat_long <- function(df, itemid_list, type_list, itemid_col, value_col) {
             return(list(type, mean_obj, sd_obj, quantile_obj))
 
         } else if(type == "cat"){
-            # 计算众数
+            # Calculate mode
             x <- df[[value_col]][ind]
             x <- as.character(x)
             mode_obj <- names(which.max(table(x, useNA = "no")))
 
             uniq_value <- sort(unique(na.omit(x)), decreasing = F)
 
-            # 计算所有可能取值的个数
+            # Count the number of all possible values
             unique_count <- length(uniq_value)
 
-            # 返回一个列表，包含2个对象
+            # Returns a list of 2 objects
             return(list(type, mode_obj, unique_count, uniq_value)) 
         } else if(type == "ord"){
 
@@ -212,10 +212,10 @@ get_stat_long <- function(df, itemid_list, type_list, itemid_col, value_col) {
 
             mean_obj <- mean(x, na.rm = TRUE)
             
-            # 计算分位数
+            # Calculate quantile
             quantile_obj <- quantile(x, probs = seq(0, 1, 0.1), na.rm = TRUE)
 
-            # 计算标准差
+            # Calculate standard deviation
             if (abs(mean_obj - quantile_obj[6]) > 0.05 * min(mean_obj, quantile_obj[6])) {
                 x_in_range <- x[x >= quantile_obj[2] & x <= quantile_obj[10]]
                 sd_obj <- sd(x_in_range, na.rm = TRUE)
@@ -223,7 +223,7 @@ get_stat_long <- function(df, itemid_list, type_list, itemid_col, value_col) {
                 sd_obj <- sd(x, na.rm = TRUE)
             }
 
-            # 如果 sd_obj ==0 或 为 NA，就赋值为0.001
+            # If sd_obj ==0 or NA, the value is 0.001
             if (is.na(sd_obj) || sd_obj == 0) {
                 sd_obj <- 1
             }
@@ -270,7 +270,7 @@ get_last <- function(x, na.rm=T){
 }
 
 
-agg_f_dict <- list("mean" = mean, "sum" = sum, "mode" = Mode, "mode" = Mode_w, 
+agg_f_dict <- list("mean" = mean, "sum" = sum, "sum_w" = sum, "mode" = Mode, "mode" = Mode_w, 
                    "mean_w" = mean_w, "median_w" = median_w, 
                    "min" = min, "max" = max, "median" = median, 
                    "first" = get_first, "last" = get_last)
@@ -284,7 +284,7 @@ resample_data_wide <- function(df, itemid_list, type_list, agg_f_list, time_list
     
     mat <- lapply(time_list, function(cur_t){
         
-        # 筛选数据
+        # filtering time
         ind_time<-which(((is.na(df[[time_col2]]) & df[[time_col1]] >= (cur_t - time_window/2) & df[[time_col1]] <= (cur_t + time_window/2)) |
                     (!is.na(df[[time_col2]]) & (df[[time_col1]] <= (cur_t + time_window/2) & df[[time_col2]] >= (cur_t - time_window/2)))))
         if(length(ind_time) == 0) return(c("0", rep(NA, length(itemid_list))))
@@ -308,7 +308,7 @@ resample_data_wide <- function(df, itemid_list, type_list, agg_f_list, time_list
 
         }) %>% do.call(rbind, .)
 
-    # 检查 mat 是否是一个矩阵，如果不是，就将其转换为一个矩阵
+    # Check whether mat is a matrix, and if not, convert it to a matrix
     if (!is.matrix(mat)) {
         mat <- matrix(mat, ncol = length(itemid_list), byrow=T)
     }
@@ -339,7 +339,7 @@ resample_data_long <- function(df,itemid_list, type_list, agg_f_list, time_list,
     
     mat <- lapply(time_list, function(cur_t){
         
-        # 筛选数据
+        # filtering time
         ind_time<-which(((is.na(df[[time_col2]]) & df[[time_col1]] >= (cur_t - time_window/2) & df[[time_col1]] <= (cur_t + time_window/2)) |
                     (!is.na(df[[time_col2]]) & (df[[time_col1]] <= (cur_t + time_window/2) & df[[time_col2]] >= (cur_t - time_window/2)))))
         if(length(ind_time) == 0) return(c("0", rep(NA, length(itemid_list))))
@@ -364,7 +364,7 @@ resample_data_long <- function(df,itemid_list, type_list, agg_f_list, time_list,
 
         }) %>% do.call(rbind, .)
 
-    # 检查 mat 是否是一个矩阵，如果不是，就将其转换为一个矩阵
+    # Check whether mat is a matrix, and if not, convert it to a matrix
     if (!is.matrix(mat)) {
         mat <- matrix(mat, ncol = length(itemid_list), byrow=T)
     }
@@ -395,30 +395,30 @@ resample_process_wide <- function(df,itemid_list, type_list, agg_f_list, time_li
     
     mat <- lapply(time_list, function(cur_t){
     
-    # 筛选数据
+    # filtering time
     # cur_t<-14
     ind_time<-which(((is.na(df[[time_col2]]) & df[[time_col1]] >= (cur_t - time_window/2) & df[[time_col1]] <= (cur_t + time_window/2)) |
                 (!is.na(df[[time_col2]]) & (df[[time_col1]] <= (cur_t + time_window/2) & df[[time_col2]] >= (cur_t - time_window/2)))))
     if(length(ind_time) == 0) return(c("0", rep(NA, length(itemid_list))))
     ds_cur <- df[ind_time, ]
 
-    # 计算交集的长度
+    # Calculate the length of the intersection
     overlap <- pmin(ds_cur[[time_col2]], cur_t + time_window/2) - pmax(ds_cur[[time_col1]], cur_t - time_window/2)
     overlap <- pmax(overlap, 0)
 
-    # 计算[start_time, end_time]的长度
+    # Calculates the length of [start_time, end_time]
     total <- ds_cur[[time_col2]] - ds_cur[[time_col1]]
 
-    # 计算比例
+    # Calculate the ratios
     ds_cur$proportion <- overlap / total
 
     cur_x <- mapply(function(itemid, type, agg_f) {
         x<-ds_cur[[itemid]]
         if (type == "num") {
             x<-as.numeric(x)
-            if(type %in% c("mean_w", "median_w")) {
+            if(agg_f %in% c("mean_w", "median_w")) {
                 return(get_agg_f(agg_f)(x, overlap, na.rm=T))
-            } else if(type == "sum"){
+            } else if(agg_f == "sum_w"){
                 x <- x * ds_cur$proportion
                 return(get_agg_f(agg_f)(x, na.rm=T))
             } else{
@@ -426,7 +426,7 @@ resample_process_wide <- function(df,itemid_list, type_list, agg_f_list, time_li
             }
         } else if (type %in% c("cat","ord")){
             x <- as.character(x)
-            if(type == "mode_w") {
+            if(agg_f == "mode_w") {
                 return(get_agg_f(agg_f)(x, overlap))
             } else {
                 return(get_agg_f(agg_f)(x))
@@ -440,7 +440,7 @@ resample_process_wide <- function(df,itemid_list, type_list, agg_f_list, time_li
         return(c("1", cur_x))
     }) %>% do.call(rbind, .)
     
-    # 检查 mat 是否是一个矩阵，如果不是，就将其转换为一个矩阵
+    # Check whether mat is a matrix, and if not, convert it to a matrix
     if (!is.matrix(mat)) {
         mat <- matrix(mat, ncol = length(itemid_list), byrow=T)
     }
@@ -471,21 +471,21 @@ resample_process_long <- function(df,itemid_list, type_list, agg_f_list, time_li
     
     mat <- lapply(time_list, function(cur_t){
     
-    # 筛选数据
+    # Filter time
     # cur_t<-14
     ind_time<-which(((is.na(df[[time_col2]]) & df[[time_col1]] >= (cur_t - time_window/2) & df[[time_col1]] <= (cur_t + time_window/2)) |
                 (!is.na(df[[time_col2]]) & (df[[time_col1]] <= (cur_t + time_window/2) & df[[time_col2]] >= (cur_t - time_window/2)))))
     if(length(ind_time) == 0) return(c("0", rep(NA, length(itemid_list))))
     ds_cur <- df[ind_time, ]
 
-    # 计算交集的长度
+    # Calculate the length of the intersection
     overlap <- pmin(ds_cur[[time_col2]], cur_t + time_window/2) - pmax(ds_cur[[time_col1]], cur_t - time_window/2)
     overlap <- pmax(overlap, 0)
 
-    # 计算[start_time, end_time]的长度
+    # Calculates the length of [start_time, end_time]
     total <- ds_cur[[time_col2]] - ds_cur[[time_col1]]
 
-    # 计算比例
+    # Calculate the ratios
     ds_cur$proportion <- overlap / total
 
     cur_x <- mapply(function(itemid, type, agg_f) {
@@ -493,9 +493,9 @@ resample_process_long <- function(df,itemid_list, type_list, agg_f_list, time_li
                         x <- ds_cur[[value_col]][ind]
                             if (type == "num") {
                                 x<-as.numeric(x)
-                                if(type %in% c("mean_w", "median_w")) {
+                                if(agg_f %in% c("mean_w", "median_w")) {
                                     return(get_agg_f(agg_f)(x, overlap[ind], na.rm=T))
-                                } else if(type == "sum") {
+                                } else if(agg_f == "sum_w") {
                                     x <- x * ds_cur$proportion[ind]
                                     return(get_agg_f(agg_f)(x, na.rm=T))
                                 } else{
@@ -503,7 +503,7 @@ resample_process_long <- function(df,itemid_list, type_list, agg_f_list, time_li
                                 }
                             } else if (type %in% c("cat", "ord")){
                                 x <- as.character(x)
-                                if(type == "mode_w") {
+                                if(agg_f == "mode_w") {
                                     return(get_agg_f(agg_f)(x, overlap[ind]))
                                 } else{
                                     return(get_agg_f(agg_f)(x, na.rm=T))
@@ -516,7 +516,7 @@ resample_process_long <- function(df,itemid_list, type_list, agg_f_list, time_li
         return(c("1", cur_x))
     }) %>% do.call(rbind, .)
     
-    # 检查 mat 是否是一个矩阵，如果不是，就将其转换为一个矩阵
+    # Check whether mat is a matrix, and if not, convert it to a matrix
     if (!is.matrix(mat)) {
         mat <- matrix(mat, ncol = length(itemid_list), byrow=T)
     }
@@ -543,16 +543,16 @@ resample_process_long <- function(df,itemid_list, type_list, agg_f_list, time_li
 }
 
 resample_binary_long <- function(df, itemid_list, time_list, itemid_col, time_col1, time_col2, time_window, keepNArow=F, keep_first=T) {
-    # resample_binary函数用于对二进制变量进行重采样
-    # 输入参数:
-    #   - df: 数据框，包含需要重采样的数据
-    #   - itemid_list: 字符串向量，表示需要重采样的变量的ID列表
-    #   - time_col1: 字符串，表示数据框中的列名，用于指定起始时间
-    #   - time_col2: 字符串，表示数据框中的列名，用于指定结束时间
-    #   - time_list: 数值向量，表示需要重采样的时间点列表
-    #   - time_window: 数值，表示重采样的时间窗口大小
-    # 输出:
-    #   - 重采样后的矩阵，包含时间和各个变量的值，类型为矩阵
+    # The resample_binary function is used for resampling binary variables.
+    # Input parameters:
+    #   - df: A dataframe that contains the data to be resampled.
+    #   - itemid_list: A vector of strings representing the IDs of the variables that need to be resampled.
+    #   - time_col1: A string specifying the column name in the dataframe for the start time.
+    #   - time_col2: A string specifying the column name in the dataframe for the end time.
+    #   - time_list: A numeric vector representing the list of time points for resampling.
+    #   - time_window: A numeric value representing the size of the resampling time window.
+    # Output:
+    #   - A resampled matrix, including time and values for each variable, as a matrix type.
     Colnames <- c("time", as.character(itemid_list))
     mat <- lapply(time_list, function(cur_t) {
         ind_time<-which(((is.na(df[[time_col2]]) & df[[time_col1]] >= (cur_t - time_window/2) & df[[time_col1]] <= (cur_t + time_window/2)) |
@@ -569,7 +569,7 @@ resample_binary_long <- function(df, itemid_list, time_list, itemid_col, time_co
 
     }) %>% do.call(rbind, .)
 
-    # 检查 mat 是否是一个矩阵，如果不是，就将其转换为一个矩阵
+    # Check whether mat is a matrix, and if not, convert it to a matrix
     if (!is.matrix(mat)) {
         mat <- matrix(mat, ncol = length(itemid_list), byrow=T)
     }
