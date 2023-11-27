@@ -1,3 +1,6 @@
+library(data.table)
+library(lubridate)
+library(magrittr)
 
 
 ####################################################################################
@@ -37,6 +40,45 @@ Mode <- function(x, na.rm=T){
     r <- names(tab)[tab == max_freq]
     if (length(r) == 0) return(NA) else return(r)
 }
+
+Mode_w <- function(x, w, na.rm=T){
+    if(na.rm) {
+        na_index <- is.na(x) | is.na(w)
+        x <- x[!na_index]
+        w <- w[!na_index]
+    }
+    # 创建一个加权直方图
+    weighted_hist <- tapply(w, x, sum)
+    # 找到加权直方图中的最大值对应的x值
+    modes <- as.numeric(names(weighted_hist)[weighted_hist == max(weighted_hist)])
+    if (length(modes) == 0) return(NA) else return(modes)
+}
+
+mean_w <- function(x, w, na.rm=T){
+    if(na.rm) {
+        na_index <- is.na(x) | is.na(w)
+        x <- x[!na_index]
+        w <- w[!na_index]
+    }
+    # 计算加权平均数
+    weighted_mean <- sum(x * w) / sum(w)
+    return(weighted_mean)
+}
+
+median_w <- function(x, w, na.rm=T){
+    if(na.rm) {
+        na_index <- is.na(x) | is.na(w)
+        x <- x[!na_index]
+        w <- w[!na_index]
+    }
+    # 计算加权中位数
+    ord <- order(x)
+    cw <- cumsum(w[ord])
+    p <- cw / sum(w)
+    weighted_median <- x[ord][max(which(p <= 0.5))]
+    return(weighted_median)
+}
+
 
 #######################################
 # get variable statistic
@@ -87,7 +129,7 @@ get_stat_wide <- function(df, itemid_list, type_list) {
             unique_count <- length(uniq_value)
 
             # 返回一个列表，包含2个对象
-            return(list(type, mode_obj, unique_count, uniq_value)) 
+            return(list(type, mode_obj, unique_count, uniq_value))
         } else if (type == "ord") {
 
             x <- df[[itemid]]
@@ -228,7 +270,10 @@ get_last <- function(x, na.rm=T){
 }
 
 
-agg_f_dict <- list("mean" = mean, "sum" = sum, "mode" = Mode, "min" = min, "max" = max, "median" = median, "first" = get_first, "last" = get_last)
+agg_f_dict <- list("mean" = mean, "sum" = sum, "mode" = Mode, "mode" = Mode_w, 
+                   "mean_w" = mean_w, "median_w" = median_w, 
+                   "min" = min, "max" = max, "median" = median, 
+                   "first" = get_first, "last" = get_last)
 get_agg_f <- function(fn){
     return(agg_f_dict[[fn]])
 }
@@ -369,17 +414,27 @@ resample_process_wide <- function(df,itemid_list, type_list, agg_f_list, time_li
 
     cur_x <- mapply(function(itemid, type, agg_f) {
         x<-ds_cur[[itemid]]
-            if (type == "num") {
-                x<-as.numeric(x)
-                x<-x*ds_cur$proportion
+        if (type == "num") {
+            x<-as.numeric(x)
+            if(type %in% c("mean_w", "median_w")) {
+                return(get_agg_f(agg_f)(x, overlap, na.rm=T))
+            } else if(type == "sum"){
+                x <- x * ds_cur$proportion
                 return(get_agg_f(agg_f)(x, na.rm=T))
-            } else if (type %in% c("cat","ord")){
-                x<-as.character(x)
-                return(get_agg_f(agg_f)(na.omit(x)))
-            } else if (type == "bin") {
-                x<-as.numeric(x)
-                return(ifelse(sum(x,na.rm = T)>=1,1,0))
+            } else{
+                return(get_agg_f(agg_f)(x, na.rm=T))
             }
+        } else if (type %in% c("cat","ord")){
+            x <- as.character(x)
+            if(type == "mode_w") {
+                return(get_agg_f(agg_f)(x, overlap))
+            } else {
+                return(get_agg_f(agg_f)(x))
+            }
+        } else if (type == "bin") {
+            x<-as.numeric(x)
+            return(ifelse(sum(x,na.rm = T)>=1,1,0))
+        }
         }, itemid_list, type_list, agg_f_list, SIMPLIFY = T) %>% unlist
 
         return(c("1", cur_x))
@@ -435,20 +490,29 @@ resample_process_long <- function(df,itemid_list, type_list, agg_f_list, time_li
 
     cur_x <- mapply(function(itemid, type, agg_f) {
                         ind <- which(ds_cur[[itemid_col]] == itemid)
-                        x<-ds_cur[[value_col]][ind]
+                        x <- ds_cur[[value_col]][ind]
                             if (type == "num") {
                                 x<-as.numeric(x)
-                                x<-x*ds_cur$proportion
-                                return(get_agg_f(agg_f)(x, na.rm=T))
-                            } else if (type %in% c("cat","ord")){
-                                x<-as.character(x)
-                                return(get_agg_f(agg_f)(x))
+                                if(type %in% c("mean_w", "median_w")) {
+                                    return(get_agg_f(agg_f)(x, overlap[ind], na.rm=T))
+                                } else if(type == "sum") {
+                                    x <- x * ds_cur$proportion[ind]
+                                    return(get_agg_f(agg_f)(x, na.rm=T))
+                                } else{
+                                    return(get_agg_f(agg_f)(x, na.rm=T))
+                                }
+                            } else if (type %in% c("cat", "ord")){
+                                x <- as.character(x)
+                                if(type == "mode_w") {
+                                    return(get_agg_f(agg_f)(x, overlap[ind]))
+                                } else{
+                                    return(get_agg_f(agg_f)(x, na.rm=T))
+                                }
                             } else if (type == "bin"){
                                 x<-as.numeric(x)
                                 return(ifelse(sum(x,na.rm = T)>=1,1,0))
                             }
                         }, itemid_list, type_list, agg_f_list, SIMPLIFY = T) %>% unlist
-
         return(c("1", cur_x))
     }) %>% do.call(rbind, .)
     
@@ -891,13 +955,17 @@ get_mask <- function(mat, col_list, time_col){
     #   - time_col: 整数，表示时间列的索引
     # 输出:
     #   - 生成的缺失值掩码矩阵
+    itemid_list <- as.character(colnames(mat)[col_list])
     mat1 <- rbind(apply(mat[,col_list,drop=F], 2, function(x) ifelse(is.na(x), 0, 1)))
     mat1 <- cbind(mat[,time_col,drop=F], mat1)
-    colnames(mat1) <- colnames(mat)
+    colnames(mat1)[2:ncol(mat1)] <- itemid_list
     mat1
 }
 
 get_deltamat <- function(mat, col_list, time_col) {
+
+  itemid_list <- as.character(colnames(mat)[col_list])
+
   # 假设 s 是一个矩阵，m 是 mat 的第二列到最后一列
   s <- as.numeric(mat[,time_col])
   m <- mat[,col_list,drop=F]
@@ -920,7 +988,7 @@ get_deltamat <- function(mat, col_list, time_col) {
 
   # 输出 delta
   delta<- cbind(mat[, time_col, drop = FALSE], delta)
-  colnames(delta) <- colnames(mat)
+  colnames(delta)[2:ncol(delta)] <- itemid_list
   return(delta)
 }
 
@@ -969,7 +1037,7 @@ remove_extreme_value_long <- function(df, itemid_list, type_list, itemid_col, va
                         ind <- which(df[[itemid_col]] == itemid)
                         df_cur <- df[ind, ]
                         if(type %in% c("num")){
-                            x <- df_cur$value
+                            x <- as.numeric(df_cur$value)
                             # 将 x 中的值再 99% 以上的值设为NA
                             x[x < quantile(x, 0.01, na.rm = TRUE) | x > quantile(x, 0.99, na.rm = TRUE)] <- NA
                             if(!neg_valid) {
