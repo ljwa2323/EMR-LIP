@@ -16,11 +16,11 @@ library(magrittr)
 create_dir <- function(root_path,verbo = T) {
   if (dir.exists(root_path)) {
     unlink(root_path, recursive = TRUE)
-    if(verbo) print(paste0(root_path," 已经删除"))
+    if(verbo) print(paste0(root_path," removed"))
   }
   if (!dir.exists(root_path)) {
     dir.create(root_path)
-    if(verbo) print(paste0(root_path," 已经创建"))
+    if(verbo) print(paste0(root_path," created"))
   }
 }
 
@@ -28,7 +28,7 @@ create_dir <- function(root_path,verbo = T) {
 # suppplement statistic function
 #######################################
 Mode <- function(x, na.rm=T){
-    # Mode函数用于计算众数
+    # this function is used to calculate mode
     # Input:
     #   - x: A column of vectors or data frames used to calculate the mode
     # Output:
@@ -87,7 +87,6 @@ median_w <- function(x, w, na.rm=T){
 get_stat_wide <- function(df, itemid_list, type_list) {
 
     stats <- mapply(function(i, itemid, type){
-        if (i %% 100 == 0) print(i)
         if (type == "num") {
             x <- df[[itemid]]
             x <- as.numeric(x)
@@ -141,12 +140,8 @@ get_stat_wide <- function(df, itemid_list, type_list) {
             quantile_obj <- quantile(x, probs = seq(0, 1, 0.1), na.rm = TRUE)
 
             # Calculate standard deviation
-            if (abs(mean_obj - quantile_obj[6]) > 0.05 * min(mean_obj, quantile_obj[6])) {
-                x_in_range <- x[x >= quantile_obj[2] & x <= quantile_obj[10]]
-                sd_obj <- sd(x_in_range, na.rm = TRUE)
-            } else {
-                sd_obj <- sd(x, na.rm = TRUE)
-            }
+            x_in_range <- x[x >= quantile_obj[2] & x <= quantile_obj[10]]
+            sd_obj <- sd(x_in_range, na.rm = TRUE)
 
             # If sd_obj ==0 or NA, the value is 0.001
             if (is.na(sd_obj) || sd_obj == 0) {
@@ -167,8 +162,6 @@ get_stat_wide <- function(df, itemid_list, type_list) {
 get_stat_long <- function(df, itemid_list, type_list, itemid_col, value_col) {
 
     stats<-mapply(function(i, itemid, type){
-        
-        if (i %% 100 == 0) print(i)
 
         ind <- which(df[[itemid_col]] == itemid)
 
@@ -700,15 +693,15 @@ norm_num <- function(mat, col_list, time_col, type_list, stats){
 
 
 rev_normnum <- function(mat, col_list, time_col, type_list, stats){
-    # rev_normnum函数用于对归一化后的数值变量进行逆归一化处理
-    # 输入参数:
-    #   - mat: 矩阵，包含需要进行逆归一化处理的数据
-    #   - col_list: 整数向量，表示需要进行逆归一化处理的变量列的索引
-    #   - time_col: 整数，表示时间列的索引
-    #   - type_list: 字符向量，表示每个变量的类型（"num"表示数值变量，"cat"表示分类变量）
-    #   - stats: 列表，包含每个数值变量的统计信息（均值和标准差）
-    # 输出:
-    #   - 逆归一化处理后的矩阵
+    # The rev_normnum function is used to reverse normalize the normalized numerical variables
+    # inputs:
+    #   - mat: A matrix containing data that needs to be reverse-normalized
+    #   - col_list: An integer vector representing the index of the variable column that needs to be reverse-normalized
+    #   - time_col: An integer that represents the index of the time column
+    #   - type_list: Character vector, representing the value type of each variable
+    #   - stats: List，contains statistics (mean and standard deviation) for each numerical variable
+    # output:
+    #   - The matrix after inverse normalization
     itemid_list <- as.character(colnames(mat)[col_list])
     mat1 <- mapply(function(col, itemid, type){
         if(type %in% c("num","ord")) {
@@ -731,16 +724,7 @@ rev_normnum <- function(mat, col_list, time_col, type_list, stats){
 # fill missing value 
 #######################################
 fill <- function(mat, col_list, time_col, type_list, fillfun_list, allNAfillfun_list, stats){
-    # fill函数用于填充缺失值
-    # 输入参数:
-    #   - mat: 矩阵，包含需要填充缺失值的数据
-    #   - col_list: 整数向量，表示需要填充缺失值的变量列的索引
-    #   - time_col: 整数，表示时间列的索引
-    #   - type_list: 字符串向量，表示变量的类型列表
-    #   - stats: 列表，包含各个变量的统计信息
-
-    # 输出:
-    #   - 填充缺失值后的矩阵
+    
     itemid_list <- as.character(colnames(mat)[col_list])
     
     mat1 <- mapply(function(col, name, type, fillfun, allNAfillfun){
@@ -843,12 +827,12 @@ fill <- function(mat, col_list, time_col, type_list, fillfun_list, allNAfillfun_
 }
 
 fill_lin <- function(x, time) {
-    # fill_lin函数用于填充线性插值
-    # 输入参数:
-    #   - x: 数值向量，表示需要进行线性插值的数据
-    #   - time: 数值向量，表示时间
-    # 输出:
-    #   - 填充线性插值后的数据，类型为数值向量
+    # The fill_lin function is used to fill the linear interpolation
+    # inputs:
+    #   - x: Numerical vector representing the data for which linear interpolation is required
+    #   - time: Numerical vector, representing time
+    # output:
+    #   - Fill the linearly interpolated data with a value vector of type
     x <- as.numeric(x)
     time <- as.numeric(time)
     
@@ -863,25 +847,24 @@ fill_lin <- function(x, time) {
         return(rep(NA, length(x)))
     }
     
-    # 预分配内存
+    # Pre-allocated memory
     x_filled <- x
     
-    # 使用 sapply 替代 for 循环
     x_filled[ind1.2] <- sapply(ind1.2, function(i) {
-        ind2.1 <- ind1.1[ind1.1 < i] # 左侧
-        ind2.2 <- ind1.1[ind1.1 > i] # 右侧
+        ind2.1 <- ind1.1[ind1.1 < i] # left
+        ind2.2 <- ind1.1[ind1.1 > i] # right
         
         if (length(ind2.1) > 0) {
-        ind3.1 <- max(ind2.1) # 左侧最近观测值位置
+        ind3.1 <- max(ind2.1) # Location of the most recent observations on the left
         if (length(ind2.2) > 0) {
-            ind3.2 <- min(ind2.2) # 右侧最近观测值位置
+            ind3.2 <- min(ind2.2) # Location of the most recent observations on the right
             return((x[ind3.2] - x[ind3.1]) / (time[ind3.2] - time[ind3.1]) * (time[i] - time[ind3.1]) + x[ind3.1])
         } else {
             return(x[ind3.1])
         }
         } else {
         if (length(ind2.2) > 0) {
-            ind3.2 <- min(ind2.2) # 右侧最近观测值位置
+            ind3.2 <- min(ind2.2) # Location of the most recent observations on the right
             return(x[ind3.2])
         } else {
             return(NA)
@@ -893,11 +876,11 @@ fill_lin <- function(x, time) {
 }
 
 fill_locf <- function(x) {
-    # fill_locf函数用于使用最近观测值进行缺失值填充
-    # 输入参数:
-    #   - x: 向量，表示需要填充缺失值的数据
-    # 输出:
-    #   - 填充缺失值后的数据，类型为向量
+    # The fill_locf function is used to fill missing values with the most recent observations
+    # inputs:
+    #   - x: Vector representing data that needs to be filled with missing values
+    # output:
+    #   - Fill the data after the missing value. The type is vector
     # x <- as.character(x)
     
     ind1.1 <- which(!is.na(x))
@@ -914,14 +897,14 @@ fill_locf <- function(x) {
     x_filled <- x
     
     x_filled[ind1.2] <- sapply(ind1.2, function(i) {
-        ind2.1 <- ind1.1[ind1.1 < i] # 左侧
-        ind2.2 <- ind1.1[ind1.1 > i] # 右侧
+        ind2.1 <- ind1.1[ind1.1 < i] # left
+        ind2.2 <- ind1.1[ind1.1 > i] # right
         
         if(length(ind2.1) > 0) {
-            ind3.1 <- max(ind2.1) # 左侧最近观测值位置
+            ind3.1 <- max(ind2.1) # Location of the most recent observation on the left
             return(x[ind3.1])
         } else if(length(ind2.2) > 0) {
-            ind3.2 <- min(ind2.2) # 右侧最近观测值位置
+            ind3.2 <- min(ind2.2) # Location of the most recent observations on the right
             return(x[ind3.2])
         } else {
             return(NA)
@@ -932,11 +915,11 @@ fill_locf <- function(x) {
 }
 
 fill_zero <- function(x) {
-    # fill_zero函数用于将缺失值填充为0
-    # 输入参数:
-    #   - x: 向量，表示需要填充缺失值的数据
-    # 输出:
-    #   - 填充缺失值后的数据，类型为向量
+    # The fill_zero function is used to fill the missing value with 0
+    # inputs:
+    #   - x: Vector representing data that needs to be filled with missing values
+    # output:
+    #   - Fill the data after the missing value. The type is vector
     # x<-as.character(x)
     x_filled <- x
     x_filled[is.na(x_filled)]<-"0"
@@ -948,13 +931,13 @@ fill_zero <- function(x) {
 # mask and delta_time
 #######################################
 get_mask <- function(mat, col_list, time_col){
-    # get_mask函数用于生成缺失值掩码
-    # 输入参数:
-    #   - mat: 矩阵，包含需要生成缺失值掩码的数据
-    #   - col_list: 整数向量，表示需要生成缺失值掩码的变量列的索引
-    #   - time_col: 整数，表示时间列的索引
-    # 输出:
-    #   - 生成的缺失值掩码矩阵
+    # The get_mask function is used to generate a missing value mask
+    # Inputs:
+    #   - mat: A matrix containing the data needed to generate the missing value mask
+    #   - col_list: An integer vector representing the index of the variable column that needs to generate the missing value mask
+    #   - time_col: An integer that represents the index of the time column
+    # Output:
+    #   - Generated missing value mask matrix
     itemid_list <- as.character(colnames(mat)[col_list])
     mat1 <- rbind(apply(mat[,col_list,drop=F], 2, function(x) ifelse(is.na(x), 0, 1)))
     mat1 <- cbind(mat[,time_col,drop=F], mat1)
@@ -966,15 +949,15 @@ get_deltamat <- function(mat, col_list, time_col) {
 
   itemid_list <- as.character(colnames(mat)[col_list])
 
-  # 假设 s 是一个矩阵，m 是 mat 的第二列到最后一列
+  # Suppose s is a matrix, and m is the second to last column of mat
   s <- as.numeric(mat[,time_col])
   m <- mat[,col_list,drop=F]
 
-  # 初始化 delta
+  # Initialize delta
   delta <- matrix(0, nrow = nrow(m), ncol = ncol(m))
 
   if (nrow(m) > 1) {
-    # 计算每个时间点的 delta
+    # Calculate the delta for each point in time
     for (t in 2:nrow(delta)) {
         for (d in 1:ncol(delta)) {
         if (m[t-1, d] == "0") {
@@ -986,7 +969,7 @@ get_deltamat <- function(mat, col_list, time_col) {
     }
   }
 
-  # 输出 delta
+  # output delta
   delta<- cbind(mat[, time_col, drop = FALSE], delta)
   colnames(delta)[2:ncol(delta)] <- itemid_list
   return(delta)
@@ -1038,7 +1021,7 @@ remove_extreme_value_long <- function(df, itemid_list, type_list, itemid_col, va
                         df_cur <- df[ind, ]
                         if(type %in% c("num")){
                             x <- as.numeric(df_cur$value)
-                            # 将 x 中的值再 99% 以上的值设为NA
+                            # remove extremes
                             x[x < quantile(x, 0.01, na.rm = TRUE) | x > quantile(x, 0.99, na.rm = TRUE)] <- NA
                             if(!neg_valid) {
                                 x[x<0] <- NA
@@ -1058,7 +1041,7 @@ remove_extreme_value_wide <- function(df, itemid_list, type_list, cols_keep, neg
                         if(type %in% c("num")){
                             x <- df[[itemid]]
                             x <- as.numeric(x)
-                            # 将 x 中的值再 99% 以上的值设为NA
+                            # remove extremes
                             x[x < quantile(x, 0.01, na.rm = TRUE) | x > quantile(x, 0.99, na.rm = TRUE)] <- NA
                             if(!neg_valid) {
                                 x[x<0] <- NA
