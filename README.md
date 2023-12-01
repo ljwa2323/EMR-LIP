@@ -1,17 +1,19 @@
 # EMR-LIP
 
 
-### EMR-LIP 简介
+### Introduction to EMR-LIP
 
-EMR-LIP 是一个 light framework, 提供了一系列在不同EMR数据库之间通用的工具，用于处理 EMR 中纵向不规则数据. EMR-LIP框架专注于将 long table 或 wide table 转化为方便下游任务建模的规则的多元时间序列，包括固定点触发的预测模型或 continuous prediciton model 的开发，或者强化学习模型的开发。
+The EMR-LIP is a streamlined framework that provides a range of tools applicable across various EMR databases for processing longitudinally irregular data found in EMRs.  It primarily transforms long or wide tables into regular, multivariate time series for ease in downstream task modeling, including the development of fixed-point triggered models, continuous prediction models, or reinforcement learning models.
 
-需要说明的是，EMR-LIP 不包含一些与研究或数据库特异的 data cleaning 工作，包括异常值处理，变量合并以及 clinical concepts 的生成，因为这些工作难以用统一的程序在不同数据库之间进行迁移。相反，EMR-LIP将纵向不规则数据处理过程中的共性部分抽象了出来，并针对这些内容开发了灵活的工具，从而促进EMR纵向不规则数据预处理的标准化和下游任务的可比性。
+It should be noted that EMR-LIP excludes specific data cleaning tasks unique to research or databases, such as outlier management, variable consolidation, and clinical concept creation.  These tasks are not readily transferable across different databases through a standardized program.  In contrast, EMR-LIP abstracts the universal aspects of processing longitudinally irregular data and develops flexible tools for these areas to standardize EMR irregular longitudinal data preprocessing and enhance the comparability of downstream tasks.
 
-EMR-LIP 其他framework的核心差异在于，EMR-LIP提供了更加细粒度的变量分类。在纵向不规则数据的预处理过程中，通常涉及到序列重采样，缺失值填补，变量转化等过程，不同类型的变量在这些过程中的处理细节是不同的。之前的框架大多只关注变量的 value type, 并将其分类为连续型和离散型，这种分类不足以正确处理EMR-LIP中所有的纵向不规则采样的变量。
+What sets EMR-LIP apart from other frameworks is its more detailed variable classification.  Preprocessing of longitudinally irregular data often involves sequence resampling, imputation, and variable transformation, with distinct processing details needed for different variable types.  Previous frameworks mainly focused on the value type of variables, categorizing them as continuous or discrete, an approach insufficient for correctly processing all types of variables with longitudinally irregular sampling in EMR-LIP.
 
-The EMR-LIP framework classifies variables in EMRs from three distinct perspectives: temporal attributes, value types, and acquisition methods.  In terms of temporal attributes, variables are categorized into static, single-point, and interval-based types.  From the viewpoint of value types, they are classified as numerical, ordinal discrete, nominal discrete and binary.  Based on acquisition methods, variables are designated as either observational variables or operational variables. A comprehensive breakdown of the variable types is provided in **Table 1**. 
+EMR-LIP categorizes EMR variables into three dimensions: <u>**temporal attributes, value types, and acquisition methods**</u>.  Temporally, variables are classified as static, single-point, or interval-based.  In terms of value types, they are divided into numerical, ordinal discrete, nominal discrete, and binary.  From the acquisition perspective, variables are identified as observational or operational.  A detailed breakdown of these variable types is presented in **Table 1**. 
 
-### **Table 1. Classification of variables in EMR databases.**
+### Table 1. Classification of variables in EMR databases.
+
+<div style="height:300px; width:700px; overflow:scroll;">
 
 <table>
     <tr>
@@ -21,7 +23,7 @@ The EMR-LIP framework classifies variables in EMRs from three distinct perspecti
         <th>Example Variable</th>
     </tr>
     <tr>
-        <td rowspan="3">By time Attribute</td>
+        <td rowspan="3">By time attribute</td>
         <td>Static</td>
         <td>Without temporal attributes</td>
         <td>Gender</td>
@@ -43,12 +45,12 @@ The EMR-LIP framework classifies variables in EMRs from three distinct perspecti
         <td>Temperature</td>
     </tr>
     <tr>
-        <td>Ordinal Discrete</td>
+        <td>Ordinal discrete</td>
         <td>Discrete values with an inherent order</td>
         <td>GCS (Glasgow Coma Scale) score</td>
     </tr>
     <tr>
-        <td>Nominal Discrete</td>
+        <td>Nominal discrete</td>
         <td>Discrete values without any inherent order</td>
         <td>Ventilation status</td>
     </tr>
@@ -59,24 +61,265 @@ The EMR-LIP framework classifies variables in EMRs from three distinct perspecti
     </tr>
     <tr>
         <td rowspan="2">By acquisition type</td>
-        <td>Observational Variable</td>
+        <td>Observational</td>
         <td>Data naturally recorded or collected without any human intervention</td>
         <td>Gender, Temperature</td>
     </tr>
     <tr>
-        <td>Operational Variable</td>
+        <td>Operational</td>
         <td>Derived from a specific operation or action</td>
         <td>Ventilation status</td>
     </tr>
 </table>
 
+</div>
+
+<br>
+<br>
+
+### Illustration of the EMR-LIP Framework
 
 <img src="./assets/EMR-LIP.png" widht=500>
 
-### EMR-LIP 框架的组件介绍
+<br>
+<br>
 
-EMR-LIP 框架由input，variable dictionary, statistical information generation, sequence resampling, data imputation, variable transformation, feature engineering, output 等8部分构成，下面我们讲一一介绍.
+The EMR-LIP framework is composed of eight distinct parts: <u>**1.input, 2.data cleaning and clinical concept generation, 3.variable dictionary and statistical information generation, 4.sequence resampling, 5.data imputation, 6.variable transformation, 7.feature engineering, and 8.the final output.**</u> 
 
-- Input
+#### To be first, load EMR-LIP framework
 
-EMR-LIP 接受两种形式的输入, 包括long table 和 wide table.  
+```{R}
+source("./EMR_APIs.R")
+```
+
+#### **1. Input**
+
+Long table or wide table
+
+#### **2. Data cleaning and clinical concept generation**
+
+EMR-LIP不提供专门的Data cleaning and clinical concept generation工具
+
+#### **3. Variable dictionary and statistical information generation**
+
+#### Variable dictionary
+
+<div style="height:200px; width:700px; overflow:scroll;">
+
+<table>
+    <tr>
+        <th>itemid</th>
+        <th>time_attribute</th>
+        <th>value_type</th>
+        <th>acqu_type</th>
+        <th>agg_f</th>
+    </tr>
+    <tr>
+        <td>age</td>
+        <td>static</td>
+        <td>num</td>
+        <td>obs</td>
+        <td>NA</td>
+    </tr>
+    <tr>
+        <td>K</td>
+        <td>single</td>
+        <td>num</td>
+        <td>obs</td>
+        <td>median</td>
+    </tr>
+    <tr>
+        <td>urine</td>
+        <td>single</td>
+        <td>num</td>
+        <td>oper</td>
+        <td>sum</td>
+    </tr>
+    <tr>
+        <td>ventilation_status</td>
+        <td>interval</td>
+        <td>cat</td>
+        <td>oper</td>
+        <td>last</td>
+    </tr>
+    <tr>
+        <td>vasopressin</td>
+        <td>interval</td>
+        <td>num</td>
+        <td>oper</td>
+        <td>sum_w</td>
+    </tr>
+    <tr>
+        <td>...</td>
+        <td>...</td>
+        <td>...</td>
+        <td>...</td>
+        <td>...</td>
+    </tr>
+</table>
+
+</div>
+
+#### Statistical information generation
+
+<div style="height:300px; width:700px; overflow:scroll;">
+
+```{R}
+# remove static variable
+dict <- dict[dict$time_attribute != "static",]
+
+# for long table input
+stat <- get_stat_long(ds,  # dataframe
+                      dict$itemid, # itemid vector
+                      dict$value_type,  # value_type vector
+                      itemcol,  # int, itemid column index
+                      valuecol # int, value column index
+                      )
+
+# for wide table input
+stat <- get_stat_long(ds, # dataframe
+                      dict$itemid, # itemid vector
+                      dict$value_type # value_type vector
+                      )
+```
+</div>
+
+#### **4. Sequence resampling**
+
+<div style="height:300px; width:700px; overflow:scroll;">
+
+```{R}
+
+# for single time point variable
+
+# resample the long table
+ds_k1 <- resample_data_long(ds_k, # dataframe,  long table that needs resampling
+                            dict$itemid, # itemid vector
+                            dict$value_type,  # value_type vector
+                            dict$agg_f, # character vector, aggregation method list of variables
+                            time_range,  # numeric vector, resampling time list
+                            "itemid",  # the column name for variable names in the long table
+                            "value",  # the column name for variable value in the long table
+                            "timecol_1",  # the column name for relative start times in the long table
+                            "timecol_2",  # the column name for relative end times in the long table
+                            1 # time interval/time window
+                            )
+
+# resample the wide table
+ds_k1 <- resample_data_wide(ds_k, # dataframe,  wide table that needs resampling
+                            dict$itemid, # itemid vector
+                            dict$value_type,  # value_type vector
+                            dict$agg_f, # character vector, aggregation method list of variables
+                            time_range,  # numeric vector, resampling time list
+                            "timecol_1",  # the column name for relative start times in the long table
+                            "timecol_2",  # the column name for relative end times in the long table
+                            1 # time interval/time window
+                            )
+
+# for interval-type variable
+
+# resample the long table
+ds_k1 <- resample_process_long(ds_k, # dataframe,  long table that needs resampling
+                                dict$itemid, # itemid vector
+                                dict$value_type,  # value_type vector
+                                dict$agg_f, # character vector, aggregation method list of variables
+                                time_range,  # numeric vector, resampling time list
+                                "itemid",  # the column name for variable names in the long table
+                                "value",  # the column name for variable value in the long table
+                                "timecol_1",  # the column name for relative start times in the long table
+                                "timecol_2",  # the column name for relative end times in the long table
+                                1 # time interval/time window
+                                )
+
+# resample the wide table
+ds_k1 <- resample_process_wide(ds_k, # dataframe, wide table that needs resampling
+                                dict$itemid, # itemid vector
+                                dict$value_type,  # value_type vector
+                                dict$agg_f, # character vector, aggregation method list of variables
+                                time_range,  # numeric vector, resampling time list
+                                "timecol_1",  # the column name for relative start times in the long table
+                                "timecol_2",  # the column name for relative end times in the long table
+                                1 # time interval/time window
+                                )
+```
+
+</div>
+
+#### **5. Data imputation**
+
+<div style="height:300px; width:700px; overflow:scroll;">
+
+```{R}
+dict <- get_fill_method(dict)
+
+ds_k2 <- fill(ds_k1,  # matrix, wide table to fill
+                3:ncol(ds_vital_k1),  # The index of the column to be filled
+                1,  # Index of the time column
+                dict$value_type,  # value type list
+                dict$fill,  # fill method list
+                dict$fillall, # fillall method list 
+                stat # List of statistics (this was previously generated using the get_stat_* function)
+                )
+```
+
+</div>
+
+#### **6. Variable transformation**
+
+<div style="height:300px; width:700px; overflow:scroll;">
+
+```{R}
+# normalization
+ds_k2 <- norm_num(ds_k2,  # matrix, wide table that needs to be normalized
+                2:ncol(ds_k2), # Index of the column that needs to be processed
+                1, # Index of the time column
+                dict$value_type,  # value type list
+                stat # List of statistics (this was previously generated using the get_stat_* function)
+                )
+
+# one-hot encoding
+ds_k2 <- to_onehot(ds_k2, # matrix, wide table that requires one_hot transformation
+                2:ncol(ds_k2), # Index of the column that needs to be processed
+                1, # Index of the time column
+                dict$value_type,  # value type list
+                stat # List of statistics (this was previously generated using the get_stat_* function)
+                )
+```
+</div>
+
+#### **7. Feature engineer**
+
+<div style="height:300px; width:700px; overflow:scroll;">
+
+```{R}
+# generate missing mask
+
+mask_k1 <- get_mask(ds_k1, # matrix, wide table before data imputation
+                    3:ncol(ds_k1), # column indexs needing to generate missing indicator
+                    1 # time column index
+                    )
+mask_k1 <- shape_as_onehot(mask_k1, 2:ncol(mask_k1), 1, get_type(stat), stat)
+
+# generate delta time matrix
+delta_k1 <- get_deltamat(mask_k1, # matrix, missing mask
+                        2:ncol(mask_k1), , # column indexs needing to generate delta time
+                        1)
+```
+
+</div>
+
+#### **8. Output**
+
+<div style="height:300px; width:700px; overflow:scroll;">
+
+```{R}
+# convert all columns to numerical type and transform into a dataframe.
+
+ds_k2 <- as.data.frame(ds_k2) %>% lapply(., as.numeric) %>% as.data.frame
+
+mask_k1 <- as.data.frame(mask_k1) %>% lapply(., as.numeric) %>% as.data.frame
+
+delta_k1 <- as.data.frame(delta_k1) %>% lapply(., as.numeric) %>% as.data.frame
+```
+
+<div>
