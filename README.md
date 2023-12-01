@@ -98,7 +98,7 @@ Long table or wide table
 
 #### **2. Data cleaning and clinical concept generation**
 
-EMR-LIP不提供专门的Data cleaning and clinical concept generation工具
+EMR-LIP does not provide tools for data cleaning and clinical concept generation.
 
 #### **3. Variable dictionary and statistical information generation**
 
