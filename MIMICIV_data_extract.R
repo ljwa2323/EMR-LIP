@@ -11,8 +11,8 @@ library(stringr)
 
 normalize_type <- function(x) {
   return(ifelse(x %in% c("num","Numeric","Solution","Ingredient","Processes","Numeric with tag"), 
-              "num", ifelse(x %in% c("cat","Text", "Checkbox", "Date and time"), 
-                  "cat", ifelse(x %in% c("ord"), "ord", NA))))
+              "num", ifelse(x %in% c("cat","Text"), 
+                  "cat", ifelse(x %in% c("ord"), "ord", ifelse(x %in% c("Checkbox", "Date and time"), "bin", NA)))))
 }
 
 source("./EMR_APIs.R")
@@ -36,49 +36,28 @@ names(icustays)
 icustays[1:2,]
 range(icustays$anchor_age)
 
+length(unique(icustays$hadm_id))
+
 # 识别 ICU transfers
 icu_transfers <- icustays[icustays$first_careunit != icustays$last_careunit,]
 print(paste("ICU transfers: ", length(unique(icu_transfers$hadm_id))))
+icustays <- icustays[!(icustays$hadm_id %in% icu_transfers$hadm_id),]
+length(unique(icustays$hadm_id))
+
 
 # 识别 2+ ICU stays per admission
 icu_stays_counts <- icustays[, .(count = .N), by = hadm_id]
 multiple_icu_stays <- icu_stays_counts[count > 1]
 print(paste("2+ ICU stays per admission: ", length(unique(multiple_icu_stays$hadm_id))))
 
-# 识别 Pediatric patients
-pediatric_patients <- icustays[icustays$anchor_age < 18,]
-print(paste("Pediatric patients: ", nrow(pediatric_patients)))
+icustays <- icustays[!(hadm_id %in% multiple_icu_stays$hadm_id),]
+length(unique(icustays$hadm_id))
 
-# 排除这三种情况的患者
-icustays <- icustays[!(hadm_id %in% multiple_icu_stays$hadm_id |
-                      subject_id %in% icu_transfers$subject_id |
-                      subject_id %in% pediatric_patients$subject_id),]
-
-dim(icustays)
-
-# 计算并输出 missing HADM_ID 的记录数
-missing_hadm_id_count <- nrow(icustays[is.na(hadm_id), ])
-print(paste("Records with missing HADM_ID: ", missing_hadm_id_count))
-
-# 排除 missing HADM_ID 的记录
-icustays <- icustays[!is.na(hadm_id), ]
-
-# 计算并输出 invalid HADM_ID 的记录数
-invalid_hadm_id_count <- nrow(icustays[hadm_id <= 0, ])
-print(paste("Records with invalid HADM_ID: ", invalid_hadm_id_count))
-
-# 排除 invalid HADM_ID 的记录
-icustays <- icustays[hadm_id > 0, ]
-
-# 计算并输出 invalid ICUSTAY_ID 的记录数
-invalid_icustay_id_count <- nrow(icustays[stay_id <= 0, ])
-print(paste("Records with invalid ICUSTAY_ID: ", invalid_icustay_id_count))
-
-# 排除 invalid ICUSTAY_ID 的记录
-icustays <- icustays[stay_id > 0, ]
 names(icustays)[names(icustays)=='los'] <- "los_icu"
 
 admissions <- icustays
+
+length(unique(admissions$hadm_id))
 
 # 计算 los_day, 计算是否30天重新入院
 admissions <- admissions %>%
@@ -108,6 +87,8 @@ table(admissions$hospital_expire_flag)
 quantile(admissions$los_day)
 names(admissions)
 
+summary(admissions[,c("subject_id","hadm_id","admittime","dischtime")])
+
 # 只保留第一次 admission 的记录
 # admissions <- admissions %>%
 #   arrange(subject_id, admittime) %>%
@@ -120,7 +101,7 @@ admissions <- admissions[complete.cases(admissions[,c("subject_id","hadm_id","ad
 object_tosave <- c()
 
 
-# ------  静态数据的处理和字典的生成 ---------------
+# ------  静态数据的处理和字典的生成 --------------- 
 
 # admissions <- admissions %>%
 #   mutate(admission_type = case_when(
@@ -151,6 +132,8 @@ admissions <- admissions %>%
     dischtime_r = as.numeric(difftime(dischtime, admittime, units = "hours"))
   )
 
+admissions$los_day_7 <- ifelse(admissions$los_day > 7 , 1, 0)
+
 fwrite(admissions, file="/home/luojiawei/Benchmark_project_data/mimiciv_data/admissions.csv",row.names = F)
 
 
@@ -158,7 +141,7 @@ dim(admissions)
 as.data.frame(admissions[1:2,])
 
 names(admissions)
-cols_static <- names(admissions)[c(14,15)] # 这行要重新选择索引, 要确定数字索引的正确性
+cols_static <- names(admissions)[c(15,16)] # 这行要重新选择索引, 要确定数字索引的正确性
 type_list_static <- c("cat","num")
 stat_static <- get_stat_wide(admissions, cols_static, type_list_static)
 
@@ -520,7 +503,7 @@ get_1hadmid <- function(k) {
   bg_k1 <- resample_data_wide(bg_k, 
                               cols_bg,
                               get_type(stat_bg),
-							  aggf_bg,
+                              aggf_bg,
                               time_range, 
                               time_col1 = "charttime_r", 
                               time_col2 = "timecol2",
@@ -532,7 +515,7 @@ get_1hadmid <- function(k) {
   chemistry_k1 <- resample_data_wide(chemistry_k, 
                                      cols_chem,
                                      get_type(stat_chemistry),
-									 aggf_chem,
+									                   aggf_chem,
                                      time_range, 
                                      time_col1 = "charttime_r", 
                                      time_col2 = "timecol2",
@@ -544,7 +527,7 @@ get_1hadmid <- function(k) {
   complete_blood_count_k1 <- resample_data_wide(complete_blood_count_k, 
                               cols_cbc,
                               get_type(stat_cbc),
-							  aggf_cbc,
+                              aggf_cbc,
                               time_range, 
                               time_col1 = "charttime_r", 
                               time_col2 = "timecol2",
@@ -556,7 +539,7 @@ get_1hadmid <- function(k) {
   coagulation_k1 <- resample_data_wide(coagulation_k, 
                               cols_coag,
                               get_type(stat_coag),
-							  aggf_coag,
+                              aggf_coag,
                               time_range, 
                               time_col1 = "charttime_r", 
                               time_col2 = "timecol2",
@@ -568,7 +551,7 @@ get_1hadmid <- function(k) {
   blood_differential_k1 <- resample_data_wide(blood_differential_k, 
                               cols_bd,
                               get_type(stat_bd),
-							  aggf_bd,
+                              aggf_bd,
                               time_range, 
                               time_col1 = "charttime_r", 
                               time_col2 = "timecol2",
@@ -580,7 +563,7 @@ get_1hadmid <- function(k) {
   enzyme_k1 <- resample_data_wide(enzyme_k, 
                               cols_enzyme,
                               get_type(stat_enzyme),
-							  aggf_enzyme,
+                              aggf_enzyme,
                               time_range, 
                               time_col1 = "charttime_r", 
                               time_col2 = "timecol2",
@@ -621,7 +604,7 @@ get_1hadmid <- function(k) {
   vitalsign_k1 <- resample_data_wide(vitalsign_k, 
                                      cols_vit,
                                      get_type(stat_vital),
-									                   aggf_vit,
+                                     aggf_vit,
                                      time_range, 
                                      time_col1 = "charttime_r", 
                                      time_col2 = "timecol2",
@@ -633,7 +616,7 @@ get_1hadmid <- function(k) {
   gcs_k1 <- resample_data_wide(gcs_k, 
                               cols_gcs,
                               get_type(stat_gcs),
-							  aggf_gcs,
+                              aggf_gcs,
                               time_range, 
                               time_col1 = "charttime_r", 
                               time_col2 = "timecol2",
@@ -644,7 +627,7 @@ get_1hadmid <- function(k) {
   urine_output_k1 <- resample_data_wide(urine_output_k, 
                               cols_uo,
                               get_type(stat_uo),
-							  aggf_uo,
+                              aggf_uo,
                               time_range, 
                               time_col1 = "charttime_r", 
                               time_col2 = "timecol2",
@@ -680,7 +663,7 @@ get_1hadmid <- function(k) {
   ventilation_k1 <- resample_process_wide(ventilation_k, 
                               cols_vent,
                               get_type(stat_vent),
-							  aggf_vent,
+                              aggf_vent,
                               time_range, 
                               time_col1 = "starttime_r", 
                               time_col2 = "endtime_r",
@@ -691,7 +674,7 @@ get_1hadmid <- function(k) {
   vasoactive_agent_k1 <- resample_process_wide(vasoactive_agent_k, 
                               cols_vaso,
                               get_type(stat_vaso),
-							                aggf_vaso,
+                              aggf_vaso,
                               time_range, 
                               time_col1 = "starttime_r", 
                               time_col2 = "endtime_r",
@@ -745,6 +728,7 @@ get_1hadmid_allAlign <- function(k) {
   bg_k1 <- resample_data_wide(bg_k, 
                               cols_bg,
                               get_type(stat_bg),
+                              aggf_bg,
                               time_range, 
                               time_col1 = "charttime_r", 
                               time_col2 = "timecol2",
@@ -756,6 +740,7 @@ get_1hadmid_allAlign <- function(k) {
   chemistry_k1 <- resample_data_wide(chemistry_k, 
                                      cols_chem,
                                      get_type(stat_chemistry),
+                                     aggf_chem,
                                      time_range, 
                                      time_col1 = "charttime_r", 
                                      time_col2 = "timecol2",
@@ -767,6 +752,7 @@ get_1hadmid_allAlign <- function(k) {
   complete_blood_count_k1 <- resample_data_wide(complete_blood_count_k, 
                               cols_cbc,
                               get_type(stat_cbc),
+                              aggf_cbc,
                               time_range, 
                               time_col1 = "charttime_r", 
                               time_col2 = "timecol2",
@@ -778,6 +764,7 @@ get_1hadmid_allAlign <- function(k) {
   coagulation_k1 <- resample_data_wide(coagulation_k, 
                               cols_coag,
                               get_type(stat_coag),
+                              aggf_coag,
                               time_range, 
                               time_col1 = "charttime_r", 
                               time_col2 = "timecol2",
@@ -789,6 +776,7 @@ get_1hadmid_allAlign <- function(k) {
   blood_differential_k1 <- resample_data_wide(blood_differential_k, 
                               cols_bd,
                               get_type(stat_bd),
+                              aggf_bd,
                               time_range, 
                               time_col1 = "charttime_r", 
                               time_col2 = "timecol2",
@@ -800,6 +788,7 @@ get_1hadmid_allAlign <- function(k) {
   enzyme_k1 <- resample_data_wide(enzyme_k, 
                               cols_enzyme,
                               get_type(stat_enzyme),
+                              aggf_enzyme,
                               time_range, 
                               time_col1 = "charttime_r", 
                               time_col2 = "timecol2",
@@ -819,6 +808,7 @@ get_1hadmid_allAlign <- function(k) {
   vitalsign_k1 <- resample_data_wide(vitalsign_k, 
                                      cols_vit,
                                      get_type(stat_vital),
+                                     aggf_vit,
                                      time_range, 
                                      time_col1 = "charttime_r", 
                                      time_col2 = "timecol2",
@@ -830,6 +820,7 @@ get_1hadmid_allAlign <- function(k) {
   gcs_k1 <- resample_data_wide(gcs_k, 
                               cols_gcs,
                               get_type(stat_gcs),
+                              aggf_gcs,
                               time_range, 
                               time_col1 = "charttime_r", 
                               time_col2 = "timecol2",
@@ -841,6 +832,7 @@ get_1hadmid_allAlign <- function(k) {
   urine_output_k1 <- resample_data_wide(urine_output_k, 
                               cols_uo,
                               get_type(stat_uo),
+                              aggf_uo,
                               time_range, 
                               time_col1 = "charttime_r", 
                               time_col2 = "timecol2",
@@ -858,6 +850,7 @@ get_1hadmid_allAlign <- function(k) {
   ventilation_k1 <- resample_process_wide(ventilation_k, 
                               cols_vent,
                               get_type(stat_vent),
+                              aggf_vent,
                               time_range, 
                               time_col1 = "starttime_r", 
                               time_col2 = "endtime_r",
@@ -868,6 +861,7 @@ get_1hadmid_allAlign <- function(k) {
   vasoactive_agent_k1 <- resample_process_wide(vasoactive_agent_k, 
                               cols_vaso,
                               get_type(stat_vaso),
+                              aggf_vaso,
                               time_range, 
                               time_col1 = "starttime_r", 
                               time_col2 = "endtime_r",
@@ -944,32 +938,32 @@ process_data <- function(k, root_path) {
     # k<-8
     id_k<-all_hadmid[k]
     folder_path<-file.path(root_path, id_k)
-    create_dir(folder_path, F)
+    # create_dir(folder_path, F)
     
     datas <- get_1hadmid_allAlign(k)
     # datas <- get_1hadmid(k)
     
+    # datas[[1]]
     # datas[[2]][1:2,]
     # datas[[5]][1:2,]
     # datas[[8]][1:2,]
 
-    fwrite(datas[[1]], file=file.path(folder_path, "static.csv"), row.names=F)
+    # fwrite(datas[[1]], file=file.path(folder_path, "static.csv"), row.names=F)
 
-    fwrite(datas[[2]], file=file.path(folder_path, "lab_x.csv"), row.names=F)
-    fwrite(datas[[3]], file=file.path(folder_path, "lab_m.csv"), row.names=F)
-    fwrite(datas[[4]], file=file.path(folder_path, "lab_dt.csv"), row.names=F)
+    # fwrite(datas[[2]], file=file.path(folder_path, "lab_x.csv"), row.names=F)
+    # fwrite(datas[[3]], file=file.path(folder_path, "lab_m.csv"), row.names=F)
+    # fwrite(datas[[4]], file=file.path(folder_path, "lab_dt.csv"), row.names=F)
 
-    fwrite(datas[[5]], file=file.path(folder_path, "vital_x.csv"), row.names=F)
-    fwrite(datas[[6]], file=file.path(folder_path, "vital_m.csv"), row.names=F)
-    fwrite(datas[[7]], file=file.path(folder_path, "vital_dt.csv"), row.names=F)
+    # fwrite(datas[[5]], file=file.path(folder_path, "vital_x.csv"), row.names=F)
+    # fwrite(datas[[6]], file=file.path(folder_path, "vital_m.csv"), row.names=F)
+    # fwrite(datas[[7]], file=file.path(folder_path, "vital_dt.csv"), row.names=F)
 
-    fwrite(datas[[8]], file=file.path(folder_path, "trt_x.csv"), row.names=F)
-    fwrite(datas[[9]], file=file.path(folder_path, "trt_m.csv"), row.names=F)
-    fwrite(datas[[10]], file=file.path(folder_path, "trt_dt.csv"), row.names=F)
+    # fwrite(datas[[8]], file=file.path(folder_path, "trt_x.csv"), row.names=F)
+    # fwrite(datas[[9]], file=file.path(folder_path, "trt_m.csv"), row.names=F)
+    # fwrite(datas[[10]], file=file.path(folder_path, "trt_dt.csv"), row.names=F)
 
-    fwrite(datas[[11]][,c("dischtime_r","hospital_expire_flag","re_admission"),drop=F], 
+    fwrite(datas[[11]][,c("dischtime_r","hospital_expire_flag","re_admission","los_day_7"),drop=F], 
            file=file.path(folder_path, "y.csv"), row.names=F)
-
 }
 
 names(admissions)
