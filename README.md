@@ -323,3 +323,8 @@ delta_k1 <- as.data.frame(delta_k1) %>% lapply(., as.numeric) %>% as.data.frame
 ```
 
 <div>
+
+<br>
+<br>
+
+For detailed use cases and an introduction, please refer to the **demo_EMR-LIP.ipynb** file.
