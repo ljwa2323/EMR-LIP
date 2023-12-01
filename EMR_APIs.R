@@ -620,15 +620,15 @@ to_onehot <- function(mat, col_list, time_col, type_list, stats){
 }
 
 rev_onehot <- function(mat1, col_list, time_col, type_list, stats){
-    # rev_onehot函数用于将独热编码还原为原始数据
-    # 输入参数:
-    #   - mat1: 数据框，包含进行独热编码后的数据
-    #   - col_list: 整数向量，表示进行独热编码的变量列的索引
-    #   - time_col: 整数，表示时间列的索引
-    #   - type_list: 字符串向量，表示变量的类型列表
-    #   - stats: 列表，包含各个变量的统计信息
-    # 输出:
-    #   - 还原后的原始数据框，类型为数据框
+    # This function is used to restore the unique thermal code to the original data
+    # input:
+    #   - mat1: matrix, which contains the data after unique thermal coding
+    #   - col_list: An integer vector representing the index of the variable column that is uniquely thermally encoded
+    #   - time_col: An integer that represents the index of the time column
+    #   - type_list: A string vector that represents a list of types for variables
+    #   - stats: List, containing statistics for each variable
+    # output:
+    #   - matrix of the original data after restoration
     itemid_list <- names(stats)
 
     num_list <-mapply(function(type, stat){
@@ -729,7 +729,6 @@ fill <- function(mat, col_list, time_col, type_list, fillfun_list, allNAfillfun_
     
     mat1 <- mapply(function(col, name, type, fillfun, allNAfillfun){
         if(type == "num") {
-            # col <- 3;name<-itemid_list[2];type<-type_list[2]
             m <- stats[[name]][[2]]
             x <- mat[,col,drop=T]
             if (all(is.na(x))) {
@@ -832,7 +831,7 @@ fill_lin <- function(x, time) {
     #   - x: Numerical vector representing the data for which linear interpolation is required
     #   - time: Numerical vector, representing time
     # output:
-    #   - Fill the linearly interpolated data with a value vector of type
+    #   - a value vector after linear interpolation.
     x <- as.numeric(x)
     time <- as.numeric(time)
     
