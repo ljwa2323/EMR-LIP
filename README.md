@@ -88,7 +88,7 @@ The EMR-LIP framework is composed of eight distinct parts: <u>**1.input, 2.data 
 
 #### To be first, load EMR-LIP framework
 
-```{R}
+```r
 source("./EMR_APIs.R")
 ```
 
@@ -164,7 +164,7 @@ EMR-LIP不提供专门的Data cleaning and clinical concept generation工具
 
 <div style="height:300px; width:700px; overflow:scroll;">
 
-```{R}
+```r
 # remove static variable
 dict <- dict[dict$time_attribute != "static",]
 
@@ -188,7 +188,7 @@ stat <- get_stat_long(ds, # dataframe
 
 <div style="height:300px; width:700px; overflow:scroll;">
 
-```{R}
+```r
 
 # for single time point variable
 
@@ -249,7 +249,7 @@ ds_k1 <- resample_process_wide(ds_k, # dataframe, wide table that needs resampli
 
 <div style="height:300px; width:700px; overflow:scroll;">
 
-```{R}
+```r
 dict <- get_fill_method(dict)
 
 ds_k2 <- fill(ds_k1,  # matrix, wide table to fill
@@ -268,7 +268,7 @@ ds_k2 <- fill(ds_k1,  # matrix, wide table to fill
 
 <div style="height:300px; width:700px; overflow:scroll;">
 
-```{R}
+```r
 # normalization
 ds_k2 <- norm_num(ds_k2,  # matrix, wide table that needs to be normalized
                 2:ncol(ds_k2), # Index of the column that needs to be processed
@@ -291,7 +291,7 @@ ds_k2 <- to_onehot(ds_k2, # matrix, wide table that requires one_hot transformat
 
 <div style="height:300px; width:700px; overflow:scroll;">
 
-```{R}
+```r
 # generate missing mask
 
 mask_k1 <- get_mask(ds_k1, # matrix, wide table before data imputation
@@ -312,7 +312,7 @@ delta_k1 <- get_deltamat(mask_k1, # matrix, missing mask
 
 <div style="height:300px; width:700px; overflow:scroll;">
 
-```{R}
+```r
 # convert all columns to numerical type and transform into a dataframe.
 
 ds_k2 <- as.data.frame(ds_k2) %>% lapply(., as.numeric) %>% as.data.frame
