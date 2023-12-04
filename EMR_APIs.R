@@ -305,7 +305,8 @@ resample_data_wide <- function(df, itemid_list, type_list, agg_f_list, time_list
                                 return(ifelse(sum(x,na.rm = T)>=1,1,0))
                             }
                             }, itemid_list, type_list, agg_f_list, SIMPLIFY = T) %>% unlist
-
+        # theta
+        # if(sum(is.na(cur_x)) > theta, "0", "1")
         return(c("1", cur_x))
 
         }) %>% do.call(rbind, .)
@@ -361,7 +362,8 @@ resample_data_long <- function(df,itemid_list, type_list, agg_f_list, time_list,
                                 return(ifelse(sum(x,na.rm = T)>=1,1,0))
                             }
                             }, itemid_list, type_list, agg_f_list, SIMPLIFY = T) %>% unlist
-
+        # theta
+        # if(sum(is.na(cur_x)) > theta, "0", "1")
         return(c("1", cur_x))
 
         }) %>% do.call(rbind, .)
@@ -441,7 +443,8 @@ resample_process_wide <- function(df,itemid_list, type_list, agg_f_list, time_li
             return(ifelse(sum(x, na.rm = T)>=1,1,0))
         }
         }, itemid_list, type_list, agg_f_list, SIMPLIFY = T) %>% unlist
-
+        # theta
+        # if(sum(is.na(cur_x)) > theta, "0", "1")
         return(c("1", cur_x))
     }) %>% do.call(rbind, .)
     
@@ -518,6 +521,8 @@ resample_process_long <- function(df,itemid_list, type_list, agg_f_list, time_li
                                 return(ifelse(sum(x,na.rm = T)>=1,1,0))
                             }
                         }, itemid_list, type_list, agg_f_list, SIMPLIFY = T) %>% unlist
+        # theta
+        # if(sum(is.na(cur_x)) > theta, "0", "1")
         return(c("1", cur_x))
     }) %>% do.call(rbind, .)
     
@@ -569,7 +574,8 @@ resample_binary_long <- function(df, itemid_list, time_list, itemid_col, time_co
             ind<-which(ds_cur[[itemid_col]]==itemid)
             if(length(ind) > 0) return(1) else {return(0)}
         }, itemid_list, SIMPLIFY = T) %>% unlist
-
+        # theta
+        # if(sum(is.na(cur_x)) > theta, "0", "1")
         return(c("1", cur_x))
 
     }) %>% do.call(rbind, .)
