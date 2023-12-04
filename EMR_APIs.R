@@ -38,7 +38,16 @@ Mode <- function(x, na.rm=T){
     tab <- table(x, useNA = "no")
     max_freq <- max(tab)
     r <- names(tab)[tab == max_freq]
-    if (length(r) == 0) return(NA) else return(r)
+    if (length(r) == 0) {
+        return(NA)
+    } else if (length(r) == 1) {
+        return(r)
+    } else {
+        # Find the last occurrence of each mode in the original vector
+        last_occurrences <- sapply(r, function(mode) max(which(x == mode)))
+        # Return the mode that occurs last
+        return(r[which.max(last_occurrences)])
+    }
 }
 
 Mode_w <- function(x, w, na.rm=T){
@@ -50,7 +59,7 @@ Mode_w <- function(x, w, na.rm=T){
     # Create a weighted histogram
     weighted_hist <- tapply(w, x, sum)
     # Find the x value corresponding to the maximum value in the weighted histogram
-    modes <- as.numeric(names(weighted_hist)[weighted_hist == max(weighted_hist)])
+    modes <- names(weighted_hist)[weighted_hist == max(weighted_hist)]
     if (length(modes) == 0) return(NA) else return(modes)
 }
 
@@ -263,7 +272,7 @@ get_last <- function(x, na.rm=T){
 }
 
 
-agg_f_dict <- list("mean" = mean, "sum" = sum, "sum_w" = sum, "mode" = Mode, "mode" = Mode_w, 
+agg_f_dict <- list("mean" = mean, "sum" = sum, "sum_w" = sum, "mode" = Mode, "mode_w" = Mode_w, 
                    "mean_w" = mean_w, "median_w" = median_w, 
                    "min" = min, "max" = max, "median" = median, 
                    "first" = get_first, "last" = get_last)
@@ -389,7 +398,7 @@ resample_process_wide <- function(df,itemid_list, type_list, agg_f_list, time_li
     mat <- lapply(time_list, function(cur_t){
     
     # filtering time
-    # cur_t<-14
+    # cur_t<-13
     ind_time<-which(((is.na(df[[time_col2]]) & df[[time_col1]] >= (cur_t - time_window/2) & df[[time_col1]] <= (cur_t + time_window/2)) |
                 (!is.na(df[[time_col2]]) & (df[[time_col1]] <= (cur_t + time_window/2) & df[[time_col2]] >= (cur_t - time_window/2)))))
     if(length(ind_time) == 0) return(c("0", rep(NA, length(itemid_list))))
@@ -406,6 +415,9 @@ resample_process_wide <- function(df,itemid_list, type_list, agg_f_list, time_li
     ds_cur$proportion <- overlap / total
 
     cur_x <- mapply(function(itemid, type, agg_f) {
+        # itemid <- itemid_list[1]
+        # type <- type_list[1]
+        # agg_f <- agg_f_list[1]
         x<-ds_cur[[itemid]]
         if (type == "num") {
             x<-as.numeric(x)
@@ -420,13 +432,13 @@ resample_process_wide <- function(df,itemid_list, type_list, agg_f_list, time_li
         } else if (type %in% c("cat","ord")){
             x <- as.character(x)
             if(agg_f == "mode_w") {
-                return(get_agg_f(agg_f)(x, overlap))
+                return(get_agg_f(agg_f)(x, overlap, na.rm=T))
             } else {
-                return(get_agg_f(agg_f)(x))
+                return(get_agg_f(agg_f)(x, na.rm=T))
             }
         } else if (type == "bin") {
             x<-as.numeric(x)
-            return(ifelse(sum(x,na.rm = T)>=1,1,0))
+            return(ifelse(sum(x, na.rm = T)>=1,1,0))
         }
         }, itemid_list, type_list, agg_f_list, SIMPLIFY = T) %>% unlist
 
@@ -438,7 +450,7 @@ resample_process_wide <- function(df,itemid_list, type_list, agg_f_list, time_li
         mat <- matrix(mat, ncol = length(itemid_list), byrow=T)
     }
 
-    mat[1,1] <- "1"
+    mat[1, 1] <- "1"
 
     if(!keepNArow) {
         ind_mat<-which(mat[,1]=="1")
