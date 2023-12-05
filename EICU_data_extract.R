@@ -32,59 +32,22 @@ unique(patients$unittype)
 # 保留只有一次 patientunitstayid 记录的样本，并统计排除的人数
 patients_grouped <- patients %>%
   group_by(patienthealthsystemstayid)
+
 single_stay_patients <- patients_grouped %>%
   filter(n() == 1) %>%
   ungroup()
-multiple_stay_patients <- setdiff(patients, single_stay_patients)
-print(paste("Multiple stays per patient: ", length(unique(multiple_stay_patients$patienthealthsystemstayid))))
+
+length(unique(single_stay_patients$patienthealthsystemstayid))
 
 # 删除年龄在18岁以下的样本，并统计排除的人数
 adult_patients <- single_stay_patients %>%
   filter(age >= 18)
-pediatric_patients <- setdiff(single_stay_patients, adult_patients)
-print(paste("Pediatric patients: ", length(unique(pediatric_patients))))
+
+length(unique(adult_patients$patienthealthsystemstayid))
 
 # 更新 patients 数据集
 patients <- adult_patients
-
-dim(patients)
-
-# 计算并输出 missing patientunitstayid 的记录数
-missing_patientunitstayid_count <- nrow(patients[is.na(patients$patientunitstayid), ])
-print(paste("Records with missing patientunitstayid: ", missing_patientunitstayid_count))
-
-# 排除 missing patientunitstayid 的记录
-patients <- patients[!is.na(patients$patientunitstayid), ]
-
-# 计算并输出 invalid patientunitstayid 的记录数
-invalid_patientunitstayid_count <- nrow(patients[patients$patientunitstayid <= 0, ])
-print(paste("Records with invalid patientunitstayid: ", invalid_patientunitstayid_count))
-
-# 排除 invalid patientunitstayid 的记录
-patients <- patients[patients$patientunitstayid > 0, ]
-
-# 计算并输出 missing patienthealthsystemstayid 的记录数
-missing_patienthealthsystemstayid_count <- nrow(patients[is.na(patients$patienthealthsystemstayid), ])
-print(paste("Records with missing patienthealthsystemstayid: ", missing_patienthealthsystemstayid_count))
-
-# 排除 missing patienthealthsystemstayid 的记录
-patients <- patients[!is.na(patients$patienthealthsystemstayid), ]
-
-# 计算并输出 invalid patienthealthsystemstayid 的记录数
-invalid_patienthealthsystemstayid_count <- nrow(patients[patients$patienthealthsystemstayid <= 0, ])
-print(paste("Records with invalid patienthealthsystemstayid: ", invalid_patienthealthsystemstayid_count))
-
-# 排除 invalid patienthealthsystemstayid 的记录
-patients <- patients[patienthealthsystemstayid > 0, ]
-
-# 计算并输出 missing uniquepid 的记录数
-missing_uniquepid_count <- nrow(patients[is.na(patients$uniquepid), ])
-print(paste("Records with missing uniquepid: ", missing_uniquepid_count))
-
-# 排除 missing uniquepid 的记录
-patients <- patients[!is.na(patients$uniquepid), ]
-
-dim(patients)
+length(unique(patients$patienthealthsystemstayid))
 
 # 转换 hospitaladmitoffset 和 hospitaldischargeoffset 为小时
 patients <- patients %>%
@@ -108,19 +71,25 @@ table(patients$unitdischargestatus)
 length(unique(patients$patienthealthsystemstayid))
 
 
+patients <- patients[which(!(patients$gender %in% c("","Unknown","Other"))),]
+
+length(unique(patients$patienthealthsystemstayid))
+
+patients$hospitaldischargeoffset_r <- (patients$hospitaldischargeoffset - patients$hospitaladmitoffset) / 60
+
+patients$los_day_7 <- ifelse(patients$stay_duration_days > 7, 1, 0)
+# table(patients$los_day_7)
+fwrite(patients, file="/home/luojiawei/Benchmark_project_data/eicu_data/patients.csv",row.names = F)
+
 object_tosave <- c()
 
 
 # ------  静态数据的处理和字典的生成 ---------------
 
 as.data.frame(patients[1:2,])
+dim(patients)
 
 names(patients)
-patients$gender[patients$gender %in% c("","Unknown")] <- NA
-patients$hospitaldischargeoffset_r <- (patients$hospitaldischargeoffset - patients$hospitaladmitoffset) / 60
-
-fwrite(patients, file="/home/luojiawei/Benchmark_project_data/eicu_data/patients.csv",row.names = F)
-dim(patients)
 
 cols_static <- names(patients)[c(3,4)] # 这行要重新选择索引, 要确定数字索引的正确性
 type_list_static <- c("cat","num")
@@ -130,6 +99,7 @@ object_tosave <- c(object_tosave, "cols_static","type_list_static","stat_static"
 
 names(patients)
 length(unique(patients$uniquepid))
+length(unique(patients$patienthealthsystemstayid))
 
 # -------- 纵向数据读取 -------------
 
@@ -338,7 +308,7 @@ get_1hadmid_allAlign <- function(k) {
   twd<-1
   time_range <- seq(0, floor(patients_k$hospitaldischargeoffset_r[1]), twd)
 
-  # 实验室检查
+  # ---------  实验室检查 --------------
   cols_1 <- c(cols_bg, cols_lab)
   stat_1 <- c(stat_bg, stat_lab)
   fillfun_list_1 <- c(fillf_bg, fillf_lab)
@@ -379,6 +349,7 @@ get_1hadmid_allAlign <- function(k) {
   vitalsign_k1 <- resample_data_wide(vitalsign_k, 
                                      cols_vit,
                                      get_type(stat_vital),
+                                      aggf_vit, 
                                      time_range, 
                                      time_col1 = "chartoffset_r", 
                                      time_col2 = "timecol2",
@@ -499,6 +470,7 @@ get_1hadmid_allAlign <- function(k) {
   delta_3 <- lapply(delta_3, as.numeric) %>% as.data.frame
 
   return(list(static, X_1, mask_1, delta_1, X_2, mask_2, delta_2, X_3, mask_3, delta_3, patients_k))
+  # return(list(patients_k))
 }
 
 process_data <- function(k, root_path) {
@@ -506,10 +478,12 @@ process_data <- function(k, root_path) {
     # k<-8
     id_k<-all_hadmid[k]
     folder_path<-file.path(root_path, id_k)
+    # if (!dir.exists(folder_path)) {
+    #   dir.create(folder_path)
+    # }
     create_dir(folder_path, F)
     
     datas <- get_1hadmid_allAlign(k)
-    # datas <- get_1hadmid(k)
     
     # datas[[2]][1:2,]
     # datas[[5]][1:2,]
@@ -529,7 +503,7 @@ process_data <- function(k, root_path) {
     fwrite(datas[[9]], file=file.path(folder_path, "trt_m.csv"), row.names=F)
     fwrite(datas[[10]], file=file.path(folder_path, "trt_dt.csv"), row.names=F)
 
-    fwrite(datas[[11]][,c("hospitaldischargeoffset_r","unitdischargestatus"),drop=F], 
+    fwrite(datas[[11]][,c("hospitaldischargeoffset_r","unitdischargestatus","los_day_7","stay_duration_days"),drop=F], 
            file=file.path(folder_path, "y.csv"), row.names=F)
 }
 

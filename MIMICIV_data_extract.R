@@ -704,7 +704,7 @@ get_1hadmid <- function(k) {
 }
 
 get_1hadmid_allAlign <- function(k) {
-  # k<-8
+  # k<-7
   id_k <- all_hadmid[k]
   admissions_k <- admissions[admissions$hadm_id==id_k,,drop=F]
   static <- admissions_k[, c(cols_static),drop=F]
@@ -930,6 +930,7 @@ get_1hadmid_allAlign <- function(k) {
   delta_3 <- lapply(delta_3, as.numeric) %>% as.data.frame
 
   return(list(static, X_1, mask_1, delta_1, X_2, mask_2, delta_2, X_3, mask_3, delta_3, admissions_k))
+  # return(list(admissions_k))
 }
 
 
@@ -938,7 +939,7 @@ process_data <- function(k, root_path) {
     # k<-8
     id_k<-all_hadmid[k]
     folder_path<-file.path(root_path, id_k)
-    # create_dir(folder_path, F)
+    create_dir(folder_path, F)
     
     datas <- get_1hadmid_allAlign(k)
     # datas <- get_1hadmid(k)
@@ -948,21 +949,21 @@ process_data <- function(k, root_path) {
     # datas[[5]][1:2,]
     # datas[[8]][1:2,]
 
-    # fwrite(datas[[1]], file=file.path(folder_path, "static.csv"), row.names=F)
+    fwrite(datas[[1]], file=file.path(folder_path, "static.csv"), row.names=F)
 
-    # fwrite(datas[[2]], file=file.path(folder_path, "lab_x.csv"), row.names=F)
-    # fwrite(datas[[3]], file=file.path(folder_path, "lab_m.csv"), row.names=F)
-    # fwrite(datas[[4]], file=file.path(folder_path, "lab_dt.csv"), row.names=F)
+    fwrite(datas[[2]], file=file.path(folder_path, "lab_x.csv"), row.names=F)
+    fwrite(datas[[3]], file=file.path(folder_path, "lab_m.csv"), row.names=F)
+    fwrite(datas[[4]], file=file.path(folder_path, "lab_dt.csv"), row.names=F)
 
-    # fwrite(datas[[5]], file=file.path(folder_path, "vital_x.csv"), row.names=F)
-    # fwrite(datas[[6]], file=file.path(folder_path, "vital_m.csv"), row.names=F)
-    # fwrite(datas[[7]], file=file.path(folder_path, "vital_dt.csv"), row.names=F)
+    fwrite(datas[[5]], file=file.path(folder_path, "vital_x.csv"), row.names=F)
+    fwrite(datas[[6]], file=file.path(folder_path, "vital_m.csv"), row.names=F)
+    fwrite(datas[[7]], file=file.path(folder_path, "vital_dt.csv"), row.names=F)
 
-    # fwrite(datas[[8]], file=file.path(folder_path, "trt_x.csv"), row.names=F)
-    # fwrite(datas[[9]], file=file.path(folder_path, "trt_m.csv"), row.names=F)
-    # fwrite(datas[[10]], file=file.path(folder_path, "trt_dt.csv"), row.names=F)
+    fwrite(datas[[8]], file=file.path(folder_path, "trt_x.csv"), row.names=F)
+    fwrite(datas[[9]], file=file.path(folder_path, "trt_m.csv"), row.names=F)
+    fwrite(datas[[10]], file=file.path(folder_path, "trt_dt.csv"), row.names=F)
 
-    fwrite(datas[[11]][,c("dischtime_r","hospital_expire_flag","re_admission","los_day_7"),drop=F], 
+    fwrite(datas[[11]][,c("dischtime_r","hospital_expire_flag","re_admission","los_day_7","deathtime_r"),drop=F], 
            file=file.path(folder_path, "y.csv"), row.names=F)
 }
 
@@ -1020,3 +1021,6 @@ fwrite(valid_set, file="/home/luojiawei/Benchmark_project_data/mimiciv_data/vali
 admissions <- fread("/home/luojiawei/Benchmark_project_data/mimiciv_data/admissions.csv", header=T)
 admissions[1:2,]
 names(admissions)
+
+
+admissions[admissions$hadm_id == 28739580,]
