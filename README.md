@@ -182,7 +182,7 @@ stat <- get_stat_long(ds,  # dataframe
                       )
 
 # for wide table input
-stat <- get_stat_long(ds, # dataframe
+stat <- get_stat_wide(ds, # dataframe
                       dict$itemid, # itemid vector
                       dict$value_type # value_type vector
                       )
