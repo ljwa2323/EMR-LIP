@@ -654,6 +654,7 @@ rev_onehot <- function(mat1, col_list, time_col, type_list, stats){
     }, type_list, stats, SIMPLIFY = T) %>% unlist
 
     mat <- lapply(1:nrow(mat1), function(r){
+        # r<-1
         x <- mat1[r, col_list]
         cur <- 1
         x1 <- list()
@@ -665,7 +666,12 @@ rev_onehot <- function(mat1, col_list, time_col, type_list, stats){
             } else {
                 vec <- stats[[i]][[4]]
                 enc <- as.integer(x[cur:(cur+num_list[i]-1)])
-                y <- vec[which(enc==1)]
+                ind <- which(enc==1)
+                if(length(ind) == 0){
+                    y <- NA
+                } else {
+                    y <- vec[ind]
+                }
                 x1[[i]] <- y
                 cur <- cur +num_list[i]
             }   
