@@ -3,6 +3,9 @@
 ## 概述
 EMR-LIP（Electronic Medical Record Longitudinal Irregular Data Preprocessing）框架是为了规范电子病历（EMR）中纵向不规则数据（LID）的预处理而设计的。该框架详细划分了变量类型，并为所有类型的变量提供了值聚合和缺失值填补方法的指南。据我们所知，EMR-LIP是首个综合考虑现有研究并对LID预处理进行规范化的框架。我们在多个具有LID的公开EMR数据库中展示了如何利用EMR-LIP进行LID预处理，为未来研究中的LID预处理建立了参考标准。
 
+![EMR-LIP 框架流程图](assets/fig.png)
+
+
 ## EMR-LIP框架用法
 
 ### 数据预处理
