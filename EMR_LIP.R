@@ -79,7 +79,7 @@ get_stat_wide <- function(df, itemid_list, type_list, C_list) {
                 sd_obj <- 1
             }
 
-            return(list(type, mean_obj, sd_obj, quantile_obj, as.numeric(cont)))
+            return(list(type=type, mean=mean_obj, sd=sd_obj, quantiles=quantile_obj, cont=as.numeric(cont)))
 
         } else if (type == "cat") {
             # Computational mode
@@ -93,7 +93,7 @@ get_stat_wide <- function(df, itemid_list, type_list, C_list) {
             unique_count <- length(uniq_value)
 
             # Returns a list of 2 objects
-            return(list(type, mode_obj, unique_count, uniq_value, cont))
+            return(list(type=type, mode=mode_obj, unique_count=unique_count, unique_values=uniq_value, cont=cont))
         } else if (type == "ord") {
 
             x <- df[[itemid]]
@@ -121,9 +121,9 @@ get_stat_wide <- function(df, itemid_list, type_list, C_list) {
                 sd_obj <- 1
             }
 
-            return(list(type, mean_obj, sd_obj, quantile_obj, as.numeric(cont), mode_obj))
+            return(list(type=type, mean=mean_obj, sd=sd_obj, quantiles=quantile_obj, cont=as.numeric(cont), mode=mode_obj))
         } else if (type == "bin") {
-            return(list(type, as.numeric(cont)))
+            return(list(type=type, cont=as.numeric(cont)))
         }
         }, 1:length(itemid_list), itemid_list, type_list, C_list, SIMPLIFY = F)
 
@@ -162,7 +162,7 @@ get_stat_long <- function(df, itemid_list, type_list, itemid_col, value_col, C_l
                 sd_obj <- 1
             }
 
-            return(list(type, mean_obj, sd_obj, quantile_obj, as.numeric(cont)))
+            return(list(type=type, mean=mean_obj, sd=sd_obj, quantiles=quantile_obj, cont=as.numeric(cont)))
 
         } else if(type == "cat"){
             # Calculate mode
@@ -176,7 +176,7 @@ get_stat_long <- function(df, itemid_list, type_list, itemid_col, value_col, C_l
             unique_count <- length(uniq_value)
 
             # Returns a list of 2 objects
-            return(list(type, mode_obj, unique_count, uniq_value, cont)) 
+            return(list(type=type, mode=mode_obj, unique_count=unique_count, unique_values=uniq_value, cont=cont)) 
             
         } else if(type == "ord"){
 
@@ -209,10 +209,10 @@ get_stat_long <- function(df, itemid_list, type_list, itemid_col, value_col, C_l
                 sd_obj <- 1
             }
 
-            return(list(type, mean_obj, sd_obj, quantile_obj, as.numeric(cont), mode_obj))
+            return(list(type=type, mean=mean_obj, sd=sd_obj, quantiles=quantile_obj, cont=as.numeric(cont), mode=mode_obj))
 
         } else if (type == "bin") {
-            return(list(type, as.numeric(cont)))
+            return(list(type=type, cont=as.numeric(cont)))
         }
         }, 1:length(itemid_list), itemid_list, type_list, C_list, SIMPLIFY = F)
 
@@ -714,8 +714,8 @@ to_onehot <- function(mat, col_list, time_col, type_list, stats){
         if(type %in% c("num","ord","bin")){
             return(mat[,col,drop=F])
         }  else if(type=="cat") {
-            N <- as.integer(stats[[name]][[3]])
-            vec <- stats[[name]][[4]]
+            N <- as.integer(stats[[name]][["unique_count"]])
+            vec <- stats[[name]][["unique_values"]]
             X <- mapply(function(u){
                     x<-rep(0, N)
                     if(is.na(u)){
@@ -764,7 +764,7 @@ rev_onehot <- function(mat1, col_list, time_col, type_list, stats){
                 cur <- cur+1
                 x1[[i]] <- y
             } else {
-                vec <- stats[[i]][[4]]
+                vec <- stats[[i]][["unique_values"]]
                 enc <- as.integer(x[cur:(cur+num_list[i]-1)])
                 ind <- which(enc==1)
                 if(length(ind) == 0){
@@ -794,8 +794,8 @@ norm_num <- function(mat, col_list, time_col, type_list, stats){
     itemid_list <- as.character(colnames(mat)[col_list])
     mat1 <- mapply(function(col, name, type){
         if(type %in% c("num","ord")) {
-            m <- stats[[name]][[2]]
-            s <- stats[[name]][[3]]
+            m <- stats[[name]][["mean"]]
+            s <- stats[[name]][["sd"]]
             x <- as.numeric(mat[, col])
             x1 <- round((x - m) / (s + 1e-6),10)
             return(x1)
@@ -829,8 +829,8 @@ rev_normnum <- function(mat, col_list, time_col, type_list, stats){
     itemid_list <- as.character(colnames(mat)[col_list])
     mat1 <- mapply(function(col, itemid, type){
         if(type %in% c("num","ord")) {
-            m <- stats[[itemid]][[2]]
-            s <- stats[[itemid]][[3]]
+            m <- stats[[itemid]][["mean"]]
+            s <- stats[[itemid]][["sd"]]
             x1 <- as.numeric(mat[,col,drop=F])
             x <- round(x1 * (s + 1e-6) + m, 10)
             return(x)
@@ -857,9 +857,9 @@ fill <- function(mat, col_list, time_col, type_list, fill1_list, fill2_list, sta
         # name = "E";type="num";fill1="mean_k",fill2="lin";col=3
 
         if(type == "num") {
-            m <- stats[[name]][[2]]
-            m1 <- stats[[name]][[4]][6]
-            cont <- stats[[name]][[5]]
+            m <- stats[[name]][["mean"]]
+            m1 <- stats[[name]][["quantiles"]][6]
+            cont <- stats[[name]][["cont"]]
             if (is.na(cont)) {
                 cont <- m
             }
@@ -934,10 +934,10 @@ fill <- function(mat, col_list, time_col, type_list, fill1_list, fill2_list, sta
             return(cbind(x1))
 
         } else if(type=="cat") {
-            mo <- stats[[name]][[2]]
+            mo <- stats[[name]][["mode"]]
             x <- mat[,col,drop=T]
             x <- as.character(x)
-            cont <- stats[[name]][[5]]
+            cont <- stats[[name]][["cont"]]
             if (is.na(cont)) {
                 cont <- mo
             }
@@ -986,10 +986,10 @@ fill <- function(mat, col_list, time_col, type_list, fill1_list, fill2_list, sta
             return(cbind(x1))
 
         } else if(type == "ord"){
-            m <- stats[[name]][[2]]
-            m1 <- stats[[name]][[4]][6]
-            mo <- stats[[name]][[6]]
-            cont <- stats[[name]][[5]]
+            m <- stats[[name]][["mean"]]
+            m1 <- stats[[name]][["quantiles"]][6]
+            mo <- stats[[name]][["mode"]]
+            cont <- stats[[name]][["cont"]]
             if (is.na(cont)) {
                 cont <- m1
             }
@@ -1071,7 +1071,7 @@ fill <- function(mat, col_list, time_col, type_list, fill1_list, fill2_list, sta
         } else if(type == "bin"){
             x <- mat[,col,drop=T]
             x <- as.numeric(x)
-            cont <- stats[[name]][[2]]
+            cont <- stats[[name]][["cont"]]
             if (is.na(cont)) {
                 cont <- 0
             }
