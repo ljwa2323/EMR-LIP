@@ -389,7 +389,7 @@ agg_f_dict <- list("mean" = Mean, "sum" = sum, "sum_w" = sum,
                    "first" = get_first, "last" = get_last,
                    "any" = Any, "all" = All)
 
-resample_single_wide <- function(df, itemid_list, type_list, agg_f_list, time_list, time_col1, time_window, direction="both", keepNArow=F, keep_first=T) {
+resample_point_wide <- function(df, itemid_list, type_list, agg_f_list, time_list, time_col1, time_window, direction="both", keepNArow=F, keep_first=T) {
 
     Colnames <- c("time", "keep", itemid_list)
     
@@ -451,7 +451,7 @@ resample_single_wide <- function(df, itemid_list, type_list, agg_f_list, time_li
     return(mat)
 }
 
-resample_single_long <- function(df, itemid_list, type_list, agg_f_list, time_list, itemid_col, value_col, time_col1, time_window, direction="both", keepNArow=F, keep_first=T) {
+resample_point_long <- function(df, itemid_list, type_list, agg_f_list, time_list, itemid_col, value_col, time_col1, time_window, direction="both", keepNArow=F, keep_first=T) {
 
     Colnames <- c("time", "keep", itemid_list)
     

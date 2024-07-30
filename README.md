@@ -21,7 +21,7 @@ EMR-LIP框架提供了一系列函数来处理EMR数据，包括数据读取、�
 2. **变量分类**：
    根据时间类型将变量字典分为单次测量和时间间隔测量两部分。
    ```R
-   var_dict1 <- var_dict[var_dict$time_type == "single", ,drop=F]
+   var_dict1 <- var_dict[var_dict$time_type == "point", ,drop=F]
    var_dict2 <- var_dict[var_dict$time_type == "interval", ,drop=F]
    ```
 
@@ -41,6 +41,18 @@ EMR-LIP框架提供了一系列函数来处理EMR数据，包括数据读取、�
    根据变量的聚合函数进行数据聚合，如平均值、求和等。
    ```R
    stat_ds1 <- get_stat_long(ds, var_dict1$itemid, var_dict1$value_type, "item_id", "value", var_dict1$cont)
+   ds_k1 <- resample_single_long(ds_k,
+                                 var_dict1$itemid,
+                                 var_dict1$value_type,
+                                 var_dict1$agg_fun,
+                                 1:15,
+                                 "item_id",
+                                 "value",
+                                 "time",
+                                 1,
+                                 direction = "both",
+                                 keepNArow = T,
+                                 keep_first = F)
    ```
 
 6. **缺失值填补**：
@@ -77,7 +89,7 @@ The EMR-LIP framework offers a suite of functions for processing EMR data, inclu
 2. **Variable Classification**:
    Divide the variable dictionary into single measurement and time interval measurement categories based on time type.
    ```R
-   var_dict1 <- var_dict[var_dict$time_type == "single", ,drop=F]
+   var_dict1 <- var_dict[var_dict$time_type == "point", ,drop=F]
    var_dict2 <- var_dict[var_dict$time_type == "interval", ,drop=F]
    ```
 
@@ -97,6 +109,18 @@ The EMR-LIP framework offers a suite of functions for processing EMR data, inclu
    Aggregate data according to the variable's aggregation function, such as average, sum, etc.
    ```R
    stat_ds1 <- get_stat_long(ds, var_dict1$itemid, var_dict1$value_type, "item_id", "value", var_dict1$cont)
+   ds_k1 <- resample_single_long(ds_k,
+                                 var_dict1$itemid,
+                                 var_dict1$value_type,
+                                 var_dict1$agg_fun,
+                                 1:15,
+                                 "item_id",
+                                 "value",
+                                 "time",
+                                 1,
+                                 direction = "both",
+                                 keepNArow = T,
+                                 keep_first = F)
    ```
 
 6. **Missing Value Imputation**:

@@ -4,7 +4,7 @@ library(readxl)
 
 ds <- read_excel("data.xlsx", col_names=T, sheet=1)
 var_dict <- read_excel("var_dict.xlsx", col_names=T, sheet=1)
-var_dict1 <- var_dict[var_dict$time_type == "single", ,drop=F]
+var_dict1 <- var_dict[var_dict$time_type == "point", ,drop=F]
 var_dict2 <- var_dict[var_dict$time_type == "interval", ,drop=F]
 ds_map <- read_excel("var_dict.xlsx", col_names=T, sheet=2)
 
