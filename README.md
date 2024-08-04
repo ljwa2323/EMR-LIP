@@ -41,7 +41,7 @@ EMR-LIP框架提供了一系列函数来处理EMR数据，包括数据读取、�
    根据变量的聚合函数进行数据聚合，如平均值、求和等。
    ```R
    stat_ds1 <- get_stat_long(ds, var_dict1$itemid, var_dict1$value_type, "item_id", "value", var_dict1$cont)
-   ds_k1 <- resample_single_long(ds_k,
+   ds_k1 <- resample_point_long(ds_k,
                                  var_dict1$itemid,
                                  var_dict1$value_type,
                                  var_dict1$agg_fun,
@@ -109,7 +109,7 @@ The EMR-LIP framework offers a suite of functions for processing EMR data, inclu
    Aggregate data according to the variable's aggregation function, such as average, sum, etc.
    ```R
    stat_ds1 <- get_stat_long(ds, var_dict1$itemid, var_dict1$value_type, "item_id", "value", var_dict1$cont)
-   ds_k1 <- resample_single_long(ds_k,
+   ds_k1 <- resample_point_long(ds_k,
                                  var_dict1$itemid,
                                  var_dict1$value_type,
                                  var_dict1$agg_fun,
