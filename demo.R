@@ -27,7 +27,7 @@ stat_ds2 <- get_stat_long(ds,
                           var_dict2$cont)
 
 ds_k <- ds[ds$sid == 1,]
-ds_k1 <- resample_single_long(ds_k,
+ds_k1 <- resample_point_long(ds_k,
                                 var_dict1$itemid,
                                 var_dict1$value_type,
                                 var_dict1$agg_fun,
