@@ -62,7 +62,7 @@ The EMR-LIP framework offers a suite of functions for processing EMR data, inclu
    ```
 
 ### Example
-以上步骤展示了如何使用EMR-LIP框架进行数据预处理。具体函数和参数设置应根据实际数据和研究需求进行调整。更多详情，请参考 [EMR_LIP_demo.ipynb](EMR_LIP_demo.ipynb) 文件。
+The steps above demonstrate how to preprocess data using the EMR-LIP framework. Specific functions and parameter settings should be adjusted based on actual data and research requirements. For more details, please refer to the [EMR_LIP_demo.ipynb](EMR_LIP_demo.ipynb) file.
 
 ## Conclusion
 The EMR-LIP framework provides a comprehensive solution for processing longitudinal irregular data in electronic medical records. Through standardized preprocessing steps, it effectively enhances data quality and the reliability of research.
