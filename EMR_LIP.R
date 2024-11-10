@@ -440,7 +440,7 @@ resample_point_wide <- function(df, itemid_list, type_list, agg_f_list, time_lis
 
     if (nrow(mat) > 1 && all(is.na(mat[1,3:ncol(mat),drop=T]))) {
         if(keep_first){
-            mat[1,2] <- "0"
+            mat[1,2] <- "1"
         } else{
             mat <- mat[-1,,drop=F]
         }
@@ -503,7 +503,7 @@ resample_point_long <- function(df, itemid_list, type_list, agg_f_list, time_lis
 
     if (nrow(mat) > 1 && all(is.na(mat[1,3:ncol(mat),drop=T]))) {
         if(keep_first){
-            mat[1,2] <- "0"
+            mat[1,2] <- "1"
         } else{
             mat <- mat[-1,,drop=F]
         }
@@ -595,7 +595,7 @@ resample_interval_wide <- function(df, itemid_list, type_list, agg_f_list, time_
 
     if (nrow(mat) > 1 && all(is.na(mat[1,3:ncol(mat),drop=T]))) {
         if(keep_first){
-            mat[1,2] <- "0"
+            mat[1,2] <- "1"
         } else{
             mat <- mat[-1,,drop=F]
         }
@@ -691,7 +691,7 @@ resample_interval_long <- function(df, itemid_list, type_list, agg_f_list, time_
 
     if (nrow(mat) > 1 && all(is.na(mat[1,3:ncol(mat),drop=T]))) {
         if(keep_first){
-            mat[1,2] <- "0"
+            mat[1,2] <- "1"
         } else{
             mat <- mat[-1,,drop=F]
         }
