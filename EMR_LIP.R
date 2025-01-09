@@ -357,6 +357,7 @@ resample_wide <- function(df, itemid_list, type_list, agg_f_list, time_list,
                          time_col1, time_col2=NULL, time_window, 
                          direction="both", keepNArow=F, keep_first=T) {
     
+<<<<<<< HEAD
     # 创建初始数据框
     result_df <- data.frame(
         time = time_list,
@@ -370,6 +371,132 @@ resample_wide <- function(df, itemid_list, type_list, agg_f_list, time_list,
         else if(type_list[i] %in% c("cat", "ord")) rep(NA_character_, length(time_list))
         else if(type_list[i] == "bin") rep(NA_integer_, length(time_list))
     })
+=======
+    mat <- lapply(time_list, function(cur_t){
+        # 根据 direction 参数调整时间过滤条件
+        if (direction == "both") {
+            ind_time <- which(df[[time_col1]] >= (cur_t - time_window/2) & df[[time_col1]] <= (cur_t + time_window/2))
+        } else if (direction == "left") {
+            ind_time <- which(df[[time_col1]] >= (cur_t - time_window) & df[[time_col1]] <= cur_t)
+        } else if (direction == "right") {
+            ind_time <- which(df[[time_col1]] >= cur_t & df[[time_col1]] <= (cur_t + time_window))
+        }
+
+        if(length(ind_time) == 0) return(c("0", rep(NA, length(itemid_list))))
+        ds_cur <- df[ind_time, ]
+
+        cur_x <- mapply(function(itemid, type, agg_f) {
+                            x <- ds_cur[[itemid]]
+                            if (type == "num") {
+                                x <- as.numeric(x)
+                                return(agg_f_dict[[agg_f]](x, na.rm=T))
+                            } else if (type %in% c("cat","ord")){
+                                return(agg_f_dict[[agg_f]](x, na.rm=T))
+                            } else if (type == "bin"){
+                                x <- as.numeric(x)
+                                return(agg_f_dict[[agg_f]](x, na.rm=T))
+                            }
+                            }, itemid_list, type_list, agg_f_list, SIMPLIFY = T) %>% unlist
+        # theta
+        # if(sum(is.na(cur_x)) > theta, "0", "1")
+        return(c("1", cur_x))
+
+        }) %>% do.call(rbind, .)
+
+    # Check whether mat is a matrix, and if not, convert it to a matrix
+    if (!is.matrix(mat)) {
+        mat <- matrix(mat, ncol = length(itemid_list), byrow=T)
+    }
+
+    mat[1,1] <- "1"
+
+    if(!keepNArow) {
+        ind_mat <- which(mat[,1]=="1")
+        mat <- rbind(cbind(time_list, mat)[ind_mat,,drop=F])
+    } else{
+        mat <- rbind(cbind(time_list, mat))
+    }
+
+    if (nrow(mat) > 1 && all(is.na(mat[1,3:ncol(mat),drop=T]))) {
+        if(keep_first){
+            mat[1,2] <- "1"
+        } else{
+            mat <- mat[-1,,drop=F]
+        }
+    }
+
+    colnames(mat) <- Colnames
+
+    return(mat)
+}
+
+resample_point_long <- function(df, itemid_list, type_list, agg_f_list, time_list, itemid_col, value_col, time_col1, time_window, direction="both", keepNArow=F, keep_first=T) {
+
+    Colnames <- c("time", "keep", itemid_list)
+    
+    mat <- lapply(time_list, function(cur_t){
+        # 根据 direction 参数调整时间过滤条件
+        if (direction == "both") {
+            ind_time <- which(df[[time_col1]] >= (cur_t - time_window/2) & df[[time_col1]] <= (cur_t + time_window/2))
+        } else if (direction == "left") {
+            ind_time <- which(df[[time_col1]] >= (cur_t - time_window) & df[[time_col1]] <= cur_t)
+        } else if (direction == "right") {
+            ind_time <- which(df[[time_col1]] >= cur_t & df[[time_col1]] <= (cur_t + time_window))
+        }
+
+        if(length(ind_time) == 0) return(c("0", rep(NA, length(itemid_list))))
+        ds_cur <- df[ind_time, ]
+
+        cur_x <- mapply(function(itemid, type, agg_f) {
+                            ind <- which(ds_cur[[itemid_col]] == itemid)
+                            x <- ds_cur[[value_col]][ind]
+                            if (type == "num") {
+                                x <- as.numeric(x)
+                                return(agg_f_dict[[agg_f]](x, na.rm=T))
+                            } else if (type %in% c("cat","ord")){
+                                return(agg_f_dict[[agg_f]](x, na.rm=T))
+                            } else if (type == "bin"){
+                                x <- as.numeric(x)
+                                return(agg_f_dict[[agg_f]](x, na.rm=T))
+                            }
+                            }, itemid_list, type_list, agg_f_list, SIMPLIFY = T) %>% unlist
+        # theta
+        # if(sum(is.na(cur_x)) > theta, "0", "1")
+        return(c("1", cur_x))
+
+        }) %>% do.call(rbind, .)
+
+    # Check whether mat is a matrix, and if not, convert it to a matrix
+    if (!is.matrix(mat)) {
+        mat <- matrix(mat, ncol = length(itemid_list), byrow=T)
+    }
+
+    mat[1,1] <- "1"
+
+    if(!keepNArow) {
+        ind_mat <- which(mat[,1]=="1")
+        mat <- rbind(cbind(time_list, mat)[ind_mat,,drop=F])
+    } else{
+        mat <- rbind(cbind(time_list, mat))
+    }
+
+    if (nrow(mat) > 1 && all(is.na(mat[1,3:ncol(mat),drop=T]))) {
+        if(keep_first){
+            mat[1,2] <- "1"
+        } else{
+            mat <- mat[-1,,drop=F]
+        }
+    }
+
+    colnames(mat) <- Colnames
+
+    return(mat)
+}
+
+resample_interval_wide <- function(df, itemid_list, type_list, agg_f_list, time_list, time_col1, time_col2, time_window, direction="both", keepNArow=F, keep_first=T) {
+
+    Colnames <- c("time", "keep", itemid_list)
+>>>>>>> cdc6a7d20b03fda68a1a339be20e974f8c1d2d9c
     
     # 使用 vapply 处理每个时间点
     results <- vapply(seq_along(time_list), function(t) {
@@ -460,6 +587,7 @@ resample_wide <- function(df, itemid_list, type_list, agg_f_list, time_list,
         c("1", values)
     }, FUN.VALUE = character(length(itemid_list) + 1), USE.NAMES = FALSE)
     
+<<<<<<< HEAD
     # 更新结果数据框
     result_df$keep <- results[1,]
     result_df[itemid_list] <- t(results[-1,])
@@ -470,6 +598,27 @@ resample_wide <- function(df, itemid_list, type_list, agg_f_list, time_list,
             result_df[[itemid_list[i]]] <- as.numeric(result_df[[itemid_list[i]]])
         } else if(type_list[i] == "bin") {
             result_df[[itemid_list[i]]] <- as.integer(result_df[[itemid_list[i]]])
+=======
+    # Check whether mat is a matrix, and if not, convert it to a matrix
+    if (!is.matrix(mat)) {
+        mat <- matrix(mat, ncol = length(itemid_list), byrow=T)
+    }
+
+    mat[1, 1] <- "1"
+
+    if(!keepNArow) {
+        ind_mat <- which(mat[,1]=="1")
+        mat <- rbind(cbind(time_list, mat)[ind_mat,,drop=F])
+    } else{
+        mat <- rbind(cbind(time_list, mat))
+    }
+
+    if (nrow(mat) > 1 && all(is.na(mat[1,3:ncol(mat),drop=T]))) {
+        if(keep_first){
+            mat[1,2] <- "1"
+        } else{
+            mat <- mat[-1,,drop=F]
+>>>>>>> cdc6a7d20b03fda68a1a339be20e974f8c1d2d9c
         }
     }
     
@@ -600,6 +749,7 @@ resample_long <- function(df, itemid_list, type_list, agg_f_list, time_list,
         c("1", values)
     }, FUN.VALUE = character(length(itemid_list) + 1), USE.NAMES = FALSE)
     
+<<<<<<< HEAD
     # 更新结果数据框
     result_df$keep <- results[1,]
     result_df[itemid_list] <- t(results[-1,])
@@ -610,6 +760,27 @@ resample_long <- function(df, itemid_list, type_list, agg_f_list, time_list,
             result_df[[itemid_list[i]]] <- as.numeric(result_df[[itemid_list[i]]])
         } else if(type_list[i] == "bin") {
             result_df[[itemid_list[i]]] <- as.integer(result_df[[itemid_list[i]]])
+=======
+    # Check whether mat is a matrix, and if not, convert it to a matrix
+    if (!is.matrix(mat)) {
+        mat <- matrix(mat, ncol = length(itemid_list), byrow=T)
+    }
+
+    mat[1,1] <- "1"
+
+    if(!keepNArow) {
+        ind_mat <- which(mat[,1]=="1")
+        mat <- rbind(cbind(time_list, mat)[ind_mat,,drop=F])
+    } else{
+        mat <- rbind(cbind(time_list, mat))
+    }
+
+    if (nrow(mat) > 1 && all(is.na(mat[1,3:ncol(mat),drop=T]))) {
+        if(keep_first){
+            mat[1,2] <- "1"
+        } else{
+            mat <- mat[-1,,drop=F]
+>>>>>>> cdc6a7d20b03fda68a1a339be20e974f8c1d2d9c
         }
     }
     
