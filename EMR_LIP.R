@@ -48,7 +48,7 @@ convert_to_numeric_df <- function(df) {
 # get variable statistic
 #######################################
 
-get_stat_wide <- function(df, itemid_list, type_list, C_list, var_dict) {
+get_stat_wide <- function(df, itemid_list, type_list, C_list, var_dict, sep = "\\|") {
     stats <- mapply(function(i, itemid, type, cont) {
         # 获取数据
         values <- df[[itemid]]
@@ -56,8 +56,16 @@ get_stat_wide <- function(df, itemid_list, type_list, C_list, var_dict) {
         if (type == "num") {
             values <- as.numeric(values)
             mean_obj <- mean(values, na.rm = TRUE)
+            median_obj <- median(values, na.rm = TRUE)
+            sd_obj <- sd(values, na.rm = TRUE)
             if (is.na(mean_obj) || length(mean_obj) == 0) {
                 mean_obj <- 0
+            }
+            if (is.na(median_obj) || length(median_obj) == 0) {
+                median_obj <- 0
+            }
+            if (is.na(sd_obj) || length(sd_obj) == 0) {
+                sd_obj <- 1
             }
             
             # cont 值优先使用传入的值，如果为 NA 则使用 mean
@@ -66,6 +74,8 @@ get_stat_wide <- function(df, itemid_list, type_list, C_list, var_dict) {
             return(list(
                 type = type,
                 mean = mean_obj,
+                median = median_obj,
+                sd = sd_obj,
                 cont = cont_value
             ))
             
@@ -76,8 +86,8 @@ get_stat_wide <- function(df, itemid_list, type_list, C_list, var_dict) {
             # 从 var_dict 获取 valid_value
             valid_values <- var_dict$valid_value[i]
             if (!is.na(valid_values)) {
-                # 使用'|'分割并去除空白字符
-                uniq_value <- sort(trimws(unlist(strsplit(valid_values, "\\|"))))
+                # 使用自定义分隔符分割并去除空白字符
+                uniq_value <- sort(trimws(unlist(strsplit(valid_values, sep))))
             } else {
                 # 如果 valid_value 为空则使用数据中的唯一值
                 uniq_value <- sort(unique(na.omit(values)))
@@ -95,17 +105,11 @@ get_stat_wide <- function(df, itemid_list, type_list, C_list, var_dict) {
             
         } else if (type == "bin") {
             values <- as.numeric(values)
-            mean_obj <- mean(values, na.rm = TRUE)
-            if (is.na(mean_obj) || length(mean_obj) == 0) {
-                mean_obj <- 0
-            }
-            
             # 对于二值型变量，cont 默认为 0
             cont_value <- if (!is.na(cont)) as.numeric(cont) else 0
             
             return(list(
                 type = type,
-                mean = mean_obj,
                 cont = cont_value
             ))
         }
@@ -115,7 +119,7 @@ get_stat_wide <- function(df, itemid_list, type_list, C_list, var_dict) {
     return(stats)
 }
 
-get_stat_long <- function(df, itemid_list, type_list, itemid_col, value_col, C_list, var_dict) {
+get_stat_long <- function(df, itemid_list, type_list, itemid_col, value_col, C_list, var_dict, sep = "\\|") {
     stats <- mapply(function(i, itemid, type, cont) {
         # 获取数据
         ind <- which(df[[itemid_col]] == itemid)
@@ -124,8 +128,16 @@ get_stat_long <- function(df, itemid_list, type_list, itemid_col, value_col, C_l
         if (type == "num") {
             values <- as.numeric(values)
             mean_obj <- mean(values, na.rm = TRUE)
+            median_obj <- median(values, na.rm = TRUE)
+            sd_obj <- sd(values, na.rm = TRUE)
             if (is.na(mean_obj) || length(mean_obj) == 0) {
                 mean_obj <- 0
+            }
+            if (is.na(median_obj) || length(median_obj) == 0) {
+                median_obj <- 0
+            }
+            if (is.na(sd_obj) || length(sd_obj) == 0) {
+                sd_obj <- 1
             }
             
             # cont 值优先使用传入的值，如果为 NA 则使用 mean
@@ -134,6 +146,8 @@ get_stat_long <- function(df, itemid_list, type_list, itemid_col, value_col, C_l
             return(list(
                 type = type,
                 mean = mean_obj,
+                median = median_obj,
+                sd = sd_obj,
                 cont = cont_value
             ))
             
@@ -144,8 +158,8 @@ get_stat_long <- function(df, itemid_list, type_list, itemid_col, value_col, C_l
             # 从 var_dict 获取 valid_value
             valid_values <- var_dict$valid_value[i]
             if (!is.na(valid_values)) {
-                # 使用'|'分割并去除空白字符
-                uniq_value <- sort(trimws(unlist(strsplit(valid_values, "\\|"))))
+                # 使用自定义分隔符分割并去除空白字符
+                uniq_value <- sort(trimws(unlist(strsplit(valid_values, sep))))
             } else {
                 # 如果 valid_value 为空则使用数据中的唯一值
                 uniq_value <- sort(unique(na.omit(values)))
@@ -163,17 +177,11 @@ get_stat_long <- function(df, itemid_list, type_list, itemid_col, value_col, C_l
             
         } else if (type == "bin") {
             values <- as.numeric(values)
-            mean_obj <- mean(values, na.rm = TRUE)
-            if (is.na(mean_obj) || length(mean_obj) == 0) {
-                mean_obj <- 0
-            }
-            
             # 对于二值型变量，cont 默认为 0
             cont_value <- if (!is.na(cont)) as.numeric(cont) else 0
             
             return(list(
                 type = type,
-                mean = mean_obj,
                 cont = cont_value
             ))
         }
@@ -346,7 +354,7 @@ median_w <- function(x, w, na.rm=T){
 }
 
 agg_f_dict <- list("mean" = Mean, "sum" = sum, "sum_w" = sum, 
-                    "mode" = Mode, "mode_w" = Mode_w, 
+                   "mode" = Mode, "mode_w" = Mode_w, 
                    "mean_w" = mean_w, "median_w" = median_w, 
                    "min" = Min, "max" = Max, "median" = Median, 
                    "first" = get_first, "last" = get_last,
@@ -357,7 +365,6 @@ resample_wide <- function(df, itemid_list, type_list, agg_f_list, time_list,
                          time_col1, time_col2=NULL, time_window, 
                          direction="both", keepNArow=F, keep_first=T) {
     
-<<<<<<< HEAD
     # 创建初始数据框
     result_df <- data.frame(
         time = time_list,
@@ -371,7 +378,7 @@ resample_wide <- function(df, itemid_list, type_list, agg_f_list, time_list,
         else if(type_list[i] %in% c("cat", "ord")) rep(NA_character_, length(time_list))
         else if(type_list[i] == "bin") rep(NA_integer_, length(time_list))
     })
-=======
+    
     mat <- lapply(time_list, function(cur_t){
         # 根据 direction 参数调整时间过滤条件
         if (direction == "both") {
@@ -413,202 +420,27 @@ resample_wide <- function(df, itemid_list, type_list, agg_f_list, time_list,
     if(!keepNArow) {
         ind_mat <- which(mat[,1]=="1")
         mat <- rbind(cbind(time_list, mat)[ind_mat,,drop=F])
-    } else{
-        mat <- rbind(cbind(time_list, mat))
-    }
-
-    if (nrow(mat) > 1 && all(is.na(mat[1,3:ncol(mat),drop=T]))) {
-        if(keep_first){
-            mat[1,2] <- "1"
-        } else{
-            mat <- mat[-1,,drop=F]
-        }
-    }
-
-    colnames(mat) <- Colnames
-
-    return(mat)
-}
-
-resample_point_long <- function(df, itemid_list, type_list, agg_f_list, time_list, itemid_col, value_col, time_col1, time_window, direction="both", keepNArow=F, keep_first=T) {
-
-    Colnames <- c("time", "keep", itemid_list)
-    
-    mat <- lapply(time_list, function(cur_t){
-        # 根据 direction 参数调整时间过滤条件
-        if (direction == "both") {
-            ind_time <- which(df[[time_col1]] >= (cur_t - time_window/2) & df[[time_col1]] <= (cur_t + time_window/2))
-        } else if (direction == "left") {
-            ind_time <- which(df[[time_col1]] >= (cur_t - time_window) & df[[time_col1]] <= cur_t)
-        } else if (direction == "right") {
-            ind_time <- which(df[[time_col1]] >= cur_t & df[[time_col1]] <= (cur_t + time_window))
-        }
-
-        if(length(ind_time) == 0) return(c("0", rep(NA, length(itemid_list))))
-        ds_cur <- df[ind_time, ]
-
-        cur_x <- mapply(function(itemid, type, agg_f) {
-                            ind <- which(ds_cur[[itemid_col]] == itemid)
-                            x <- ds_cur[[value_col]][ind]
-                            if (type == "num") {
-                                x <- as.numeric(x)
-                                return(agg_f_dict[[agg_f]](x, na.rm=T))
-                            } else if (type %in% c("cat","ord")){
-                                return(agg_f_dict[[agg_f]](x, na.rm=T))
-                            } else if (type == "bin"){
-                                x <- as.numeric(x)
-                                return(agg_f_dict[[agg_f]](x, na.rm=T))
-                            }
-                            }, itemid_list, type_list, agg_f_list, SIMPLIFY = T) %>% unlist
-        # theta
-        # if(sum(is.na(cur_x)) > theta, "0", "1")
-        return(c("1", cur_x))
-
-        }) %>% do.call(rbind, .)
-
-    # Check whether mat is a matrix, and if not, convert it to a matrix
-    if (!is.matrix(mat)) {
-        mat <- matrix(mat, ncol = length(itemid_list), byrow=T)
-    }
-
-    mat[1,1] <- "1"
-
-    if(!keepNArow) {
-        ind_mat <- which(mat[,1]=="1")
-        mat <- rbind(cbind(time_list, mat)[ind_mat,,drop=F])
-    } else{
-        mat <- rbind(cbind(time_list, mat))
-    }
-
-    if (nrow(mat) > 1 && all(is.na(mat[1,3:ncol(mat),drop=T]))) {
-        if(keep_first){
-            mat[1,2] <- "1"
-        } else{
-            mat <- mat[-1,,drop=F]
-        }
-    }
-
-    colnames(mat) <- Colnames
-
-    return(mat)
-}
-
-resample_interval_wide <- function(df, itemid_list, type_list, agg_f_list, time_list, time_col1, time_col2, time_window, direction="both", keepNArow=F, keep_first=T) {
-
-    Colnames <- c("time", "keep", itemid_list)
->>>>>>> cdc6a7d20b03fda68a1a339be20e974f8c1d2d9c
-    
-    # 使用 vapply 处理每个时间点
-    results <- vapply(seq_along(time_list), function(t) {
-        cur_t <- time_list[t]
         
-        # 时间窗口过滤
-        ind_time <- if (is.null(time_col2)) {
-            switch(direction,
-                "both" = which(df[[time_col1]] >= (cur_t - time_window/2) & 
-                              df[[time_col1]] <= (cur_t + time_window/2)),
-                "left" = which(df[[time_col1]] >= (cur_t - time_window) & 
-                             df[[time_col1]] <= cur_t),
-                "right" = which(df[[time_col1]] >= cur_t & 
-                              df[[time_col1]] <= (cur_t + time_window))
+        # 如果过滤后没有观测值,返回第一个时间点的全 NA 行
+        if(nrow(mat) == 0) {
+            result_df <- data.frame(
+                time = time_list[1],
+                keep = "0",
+                stringsAsFactors = FALSE
             )
-        } else {
-            switch(direction,
-                "both" = which((is.na(df[[time_col2]]) & 
-                               df[[time_col1]] >= (cur_t - time_window/2) & 
-                               df[[time_col1]] <= (cur_t + time_window/2)) |
-                              (!is.na(df[[time_col2]]) & 
-                               df[[time_col1]] <= (cur_t + time_window/2) & 
-                               df[[time_col2]] >= (cur_t - time_window/2))),
-                "left" = which((is.na(df[[time_col2]]) & 
-                              df[[time_col1]] >= (cur_t - time_window) & 
-                              df[[time_col1]] <= cur_t) |
-                             (!is.na(df[[time_col2]]) & 
-                              df[[time_col1]] <= cur_t & 
-                              df[[time_col2]] >= (cur_t - time_window))),
-                "right" = which((is.na(df[[time_col2]]) & 
-                               df[[time_col1]] >= cur_t & 
-                               df[[time_col1]] <= (cur_t + time_window)) |
-                              (!is.na(df[[time_col2]]) & 
-                               df[[time_col1]] <= (cur_t + time_window) & 
-                               df[[time_col2]] >= cur_t))
-            )
-        }
-        
-        if(length(ind_time) == 0) {
-            return(c("0", rep(NA, length(itemid_list))))
-        }
-        
-        ds_cur <- df[ind_time, ]
-        
-        # 计算重叠部分
-        if (!is.null(time_col2)) {
-            overlap <- switch(direction,
-                "both" = pmin(ds_cur[[time_col2]], cur_t + time_window/2) - 
-                         pmax(ds_cur[[time_col1]], cur_t - time_window/2),
-                "left" = pmin(ds_cur[[time_col2]], cur_t) - 
-                         pmax(ds_cur[[time_col1]], cur_t - time_window),
-                "right" = pmin(ds_cur[[time_col2]], cur_t + time_window) - 
-                          pmax(ds_cur[[time_col1]], cur_t)
-            )
-            overlap <- pmax(overlap, 0)
-            total <- ds_cur[[time_col2]] - ds_cur[[time_col1]]
-            ds_cur$proportion <- overlap / total
-        }
-        
-        # 使用 sapply 处理每个变量
-        values <- sapply(seq_along(itemid_list), function(i) {
-            itemid <- itemid_list[i]
-            type <- type_list[i]
-            agg_f <- agg_f_list[i]
-            
-            x <- ds_cur[[itemid]]
-            
-            if(type == "num") {
-                x <- as.numeric(x)
-                if(!is.null(time_col2) && agg_f %in% c("mean_w", "median_w", "mode_w")) {
-                    agg_f_dict[[agg_f]](x, overlap, na.rm=T)
-                } else if(!is.null(time_col2) && agg_f == "sum_w") {
-                    agg_f_dict[[agg_f]](x * ds_cur$proportion, na.rm=T)
+            result_df[itemid_list] <- NA
+            # 确保正确的数据类型
+            for(i in seq_along(itemid_list)) {
+                if(type_list[i] == "num") {
+                    result_df[[itemid_list[i]]] <- as.numeric(NA)
+                } else if(type_list[i] == "bin") {
+                    result_df[[itemid_list[i]]] <- as.integer(NA)
                 } else {
-                    agg_f_dict[[agg_f]](x, na.rm=T)
+                    result_df[[itemid_list[i]]] <- as.character(NA)
                 }
-            } else if(type %in% c("cat", "ord")) {
-                if(!is.null(time_col2) && agg_f == "mode_w") {
-                    agg_f_dict[[agg_f]](x, overlap, na.rm=T)
-                } else {
-                    agg_f_dict[[agg_f]](x, na.rm=T)
-                }
-            } else if(type == "bin") {
-                agg_f_dict[[agg_f]](as.integer(x), na.rm=T)
             }
-        })
-        
-        c("1", values)
-    }, FUN.VALUE = character(length(itemid_list) + 1), USE.NAMES = FALSE)
-    
-<<<<<<< HEAD
-    # 更新结果数据框
-    result_df$keep <- results[1,]
-    result_df[itemid_list] <- t(results[-1,])
-    
-    # 转换数据类型
-    for(i in seq_along(itemid_list)) {
-        if(type_list[i] == "num") {
-            result_df[[itemid_list[i]]] <- as.numeric(result_df[[itemid_list[i]]])
-        } else if(type_list[i] == "bin") {
-            result_df[[itemid_list[i]]] <- as.integer(result_df[[itemid_list[i]]])
-=======
-    # Check whether mat is a matrix, and if not, convert it to a matrix
-    if (!is.matrix(mat)) {
-        mat <- matrix(mat, ncol = length(itemid_list), byrow=T)
-    }
-
-    mat[1, 1] <- "1"
-
-    if(!keepNArow) {
-        ind_mat <- which(mat[,1]=="1")
-        mat <- rbind(cbind(time_list, mat)[ind_mat,,drop=F])
+            return(result_df)
+        }
     } else{
         mat <- rbind(cbind(time_list, mat))
     }
@@ -618,26 +450,13 @@ resample_interval_wide <- function(df, itemid_list, type_list, agg_f_list, time_
             mat[1,2] <- "1"
         } else{
             mat <- mat[-1,,drop=F]
->>>>>>> cdc6a7d20b03fda68a1a339be20e974f8c1d2d9c
         }
     }
-    
-    # 处理 keepNArow 和 keep_first
-    if(!keepNArow) {
-        result_df <- result_df[result_df$keep == "1", ]
-    }
-    
-    if(nrow(result_df) > 1 && all(is.na(result_df[1, itemid_list]))) {
-        if(keep_first) {
-            result_df$keep[1] <- "0"
-        } else {
-            result_df <- result_df[-1, ]
-        }
-    }
-    
-    return(result_df)
-}
 
+    colnames(mat) <- Colnames
+
+    return(mat)
+}
 
 resample_long <- function(df, itemid_list, type_list, agg_f_list, time_list,
                          time_col1, time_col2=NULL, itemid_col, value_col,
@@ -665,7 +484,7 @@ resample_long <- function(df, itemid_list, type_list, agg_f_list, time_list,
         ind_time <- if (is.null(time_col2)) {
             switch(direction,
                 "both" = which(df[[time_col1]] >= (cur_t - time_window/2) & 
-                              df[[time_col1]] <= (cur_t + time_window/2)),
+                          df[[time_col1]] <= (cur_t + time_window/2)),
                 "left" = which(df[[time_col1]] >= (cur_t - time_window) & 
                              df[[time_col1]] <= cur_t),
                 "right" = which(df[[time_col1]] >= cur_t & 
@@ -749,7 +568,6 @@ resample_long <- function(df, itemid_list, type_list, agg_f_list, time_list,
         c("1", values)
     }, FUN.VALUE = character(length(itemid_list) + 1), USE.NAMES = FALSE)
     
-<<<<<<< HEAD
     # 更新结果数据框
     result_df$keep <- results[1,]
     result_df[itemid_list] <- t(results[-1,])
@@ -760,33 +578,33 @@ resample_long <- function(df, itemid_list, type_list, agg_f_list, time_list,
             result_df[[itemid_list[i]]] <- as.numeric(result_df[[itemid_list[i]]])
         } else if(type_list[i] == "bin") {
             result_df[[itemid_list[i]]] <- as.integer(result_df[[itemid_list[i]]])
-=======
-    # Check whether mat is a matrix, and if not, convert it to a matrix
-    if (!is.matrix(mat)) {
-        mat <- matrix(mat, ncol = length(itemid_list), byrow=T)
-    }
-
-    mat[1,1] <- "1"
-
-    if(!keepNArow) {
-        ind_mat <- which(mat[,1]=="1")
-        mat <- rbind(cbind(time_list, mat)[ind_mat,,drop=F])
-    } else{
-        mat <- rbind(cbind(time_list, mat))
-    }
-
-    if (nrow(mat) > 1 && all(is.na(mat[1,3:ncol(mat),drop=T]))) {
-        if(keep_first){
-            mat[1,2] <- "1"
-        } else{
-            mat <- mat[-1,,drop=F]
->>>>>>> cdc6a7d20b03fda68a1a339be20e974f8c1d2d9c
         }
     }
     
     # 处理 keepNArow 和 keep_first
     if(!keepNArow) {
         result_df <- result_df[result_df$keep == "1", ]
+        
+        # 如果过滤后没有观测值,返回第一个时间点的全 NA 行
+        if(nrow(result_df) == 0) {
+            result_df <- data.frame(
+                time = time_list[1],
+                keep = "0",
+                stringsAsFactors = FALSE
+            )
+            result_df[itemid_list] <- NA
+            # 确保正确的数据类型
+            for(i in seq_along(itemid_list)) {
+                if(type_list[i] == "num") {
+                    result_df[[itemid_list[i]]] <- as.numeric(NA)
+                } else if(type_list[i] == "bin") {
+                    result_df[[itemid_list[i]]] <- as.integer(NA)
+                } else {
+                    result_df[[itemid_list[i]]] <- as.character(NA)
+                }
+            }
+            return(result_df)
+        }
     }
     
     if(nrow(result_df) > 1 && all(is.na(result_df[1, itemid_list]))) {
@@ -800,16 +618,15 @@ resample_long <- function(df, itemid_list, type_list, agg_f_list, time_list,
     return(result_df)
 }
 
-
 #######################################
 # One hot
 #######################################
-to_onehot <- function(df, col_list, time_col, type_list, stats) {
+to_onehot <- function(df, col_list, time_col = NULL, type_list, stats) {
     # 初始化结果数据框
-    if (!is.null(time_col)) {
-        result_df <- data.frame(time = df[[time_col]])
+    if (is.null(time_col) || is.na(time_col)) {
+        result_df <- data.frame(row.names = 1:nrow(df))  # 使用行号作为行名
     } else {
-        result_df <- data.frame()
+        result_df <- data.frame(time = df[[time_col]])
     }
     
     # 使用 mapply 处理每个变量
@@ -824,6 +641,10 @@ to_onehot <- function(df, col_list, time_col, type_list, stats) {
             onehot_matrix <- sapply(1:N, function(i) {
                 as.integer(df[[col]] == vec[i])
             })
+            # 确保单行数据时返回矩阵格式
+            if (!is.matrix(onehot_matrix)) {
+                onehot_matrix <- matrix(onehot_matrix, nrow=1)
+            }
             onehot_df <- as.data.frame(onehot_matrix)
             colnames(onehot_df) <- paste0(name, "___", 1:N)
             return(onehot_df)
@@ -831,42 +652,50 @@ to_onehot <- function(df, col_list, time_col, type_list, stats) {
     }, col_list, names(df)[col_list], type_list, SIMPLIFY = FALSE)
     
     # 合并所有列
-    result_df <- cbind(result_df, do.call(cbind, encoded_cols))
+    if (length(result_df) == 0) {
+        result_df <- do.call(cbind, encoded_cols)  # 如果没有时间列，直接合并编码列
+    } else {
+        result_df <- cbind(result_df, do.call(cbind, encoded_cols))  # 有时间列，则包含时间列
+    }
     
     return(result_df)
 }
 
-
-
-rev_onehot <- function(df, col_list, time_col, type_list, stats) {
-    # 初始化结果数据框
-    if (!is.null(time_col)) {
-        result_df <- data.frame(time = df[[time_col]])
+rev_onehot <- function(df, col_list, time_col = NULL, type_list, stats) {
+    # 初始化结果数据框和偏移量
+    if (is.null(time_col) || is.na(time_col)) {
+        result_df <- data.frame(row.names = 1:nrow(df))
+        time_offset <- 0
     } else {
-        result_df <- data.frame()
+        result_df <- data.frame(time = df[[time_col]])
+        time_offset <- 1
     }
     
-    # 计算每个变量的列数
-    num_cols <- sapply(seq_along(type_list), function(i) {
-        if (type_list[i] %in% c("num", "bin")) 1
-        else length(stats[[names(stats)[col_list[i]]]][["unique_values"]])
-    })
-    
-    # 当前列的索引
-    cur_col <- 1
+    # col_list 直接包含原始变量名
+    orig_names <- col_list
     
     # 使用 mapply 处理每个变量
-    decoded_cols <- mapply(function(i, type) {
-        if (type %in% c("num","bin")) {
-            col_data <- df[, cur_col + time_col, drop=FALSE]
-            cur_col <<- cur_col + 1
-            return(col_data)
+    decoded_cols <- mapply(function(orig_name, type) {
+        if (type %in% c("num", "bin")) {
+            # 直接使用原始变量名
+            return(df[, orig_name, drop=FALSE])
         } else if (type %in% c("ord", "cat")) {
-            n_cols <- num_cols[i]
-            vec <- stats[[names(stats)[col_list[i]]]][["unique_values"]]
+            # 找到所有属于当前变量的列
+            pattern <- paste0("^", orig_name, "___")
+            matched_cols <- grep(pattern, names(df))
+            
+            if (length(matched_cols) == 0) {
+                stop(paste("No columns found for variable:", orig_name))
+            }
+            
+            vec <- stats[[orig_name]][["unique_values"]]
             
             # 获取 one-hot 编码列
-            onehot_cols <- as.matrix(df[, (cur_col + time_col):(cur_col + time_col + n_cols - 1)])
+            onehot_cols <- as.matrix(df[, matched_cols])
+            # 确保单行数据时是矩阵格式
+            if (!is.matrix(onehot_cols)) {
+                onehot_cols <- matrix(onehot_cols, nrow=1)
+            }
             
             # 转换回分类变量
             cat_var <- apply(onehot_cols, 1, function(row) {
@@ -876,14 +705,23 @@ rev_onehot <- function(df, col_list, time_col, type_list, stats) {
                 vec[ind[1]]
             })
             
-            cur_col <<- cur_col + n_cols
             return(data.frame(cat_var))
         }
-    }, seq_along(type_list), type_list, SIMPLIFY = FALSE)
+    }, orig_names, type_list, SIMPLIFY = FALSE)
     
     # 合并所有列
-    result_df <- cbind(result_df, do.call(cbind, decoded_cols))
-    colnames(result_df)[-1] <- names(stats)[col_list]
+    if (length(result_df) == 0) {
+        result_df <- do.call(cbind, decoded_cols)
+    } else {
+        result_df <- cbind(result_df, do.call(cbind, decoded_cols))
+    }
+    
+    # 设置列名
+    if (is.null(time_col) || is.na(time_col)) {
+        colnames(result_df) <- orig_names
+    } else {
+        colnames(result_df)[-1] <- orig_names
+    }
     
     return(result_df)
 }
@@ -984,26 +822,21 @@ fill <- function(df, col_list, type_list, fill1_list, fill2_list, stats, time_co
         # 根据变量类型获取统计量
         if(type == "num") {
             m <- stats[[name]][["mean"]]
-            m1 <- stats[[name]][["quantiles"]][6]
+            m1 <- stats[[name]][["median"]]
             mo <- stats[[name]][["mode"]]
             cont <- stats[[name]][["cont"]]
-            
-            # 检查必要的统计量是否存在
-            if (is.null(m)) stop(sprintf("Mean not found for numeric variable: %s", name))
-            if (is.null(cont)) stop(sprintf("Cont value not found for numeric variable: %s", name))
-            
-            if(is.na(cont)) cont <- m
             
             # 处理第一个缺失值
             if(is.na(x[1])) {
                 x[1] <- switch(fill1,
                     "mean" = m,
                     "median" = m1,
-                    "mode" = mo,
                     "cont" = cont,
-                    "locb" = if(all(is.na(x))) cont else x[which(!is.na(x))[1]],
-                    "zero" = 0,
+                    "mean_k" = if(all(is.na(x))) cont else mean(x, na.rm = TRUE),
+                    "median_k" = if(all(is.na(x))) cont else median(x, na.rm = TRUE),
                     "mode_k" = if(all(is.na(x))) cont else Mode(x),
+                    "zero" = 0,
+                    "nocb" = if(all(is.na(x))) cont else x[which(!is.na(x))[1]],  # 添加 nocb 的情况
                     stop(sprintf("wrong fill1 method: %s for num type", fill1))
                 )
             }
@@ -1016,8 +849,6 @@ fill <- function(df, col_list, type_list, fill1_list, fill2_list, stats, time_co
                 "cont" = fill_cont(x, cont),
                 "mean" = fill_cont(x, m),
                 "median" = fill_cont(x, m1),
-                "locb" = fill_locb(x),
-                "mode" = fill_cont(x, mo),
                 "mean_k" = if(all(is.na(x))) fill_cont(x, cont) else fill_cont(x, mean(x, na.rm = TRUE)),
                 "median_k" = if(all(is.na(x))) fill_cont(x, cont) else fill_cont(x, median(x, na.rm = TRUE)),
                 "mode_k" = if(all(is.na(x))) fill_cont(x, cont) else fill_cont(x, Mode(x)),
@@ -1028,18 +859,12 @@ fill <- function(df, col_list, type_list, fill1_list, fill2_list, stats, time_co
             mo <- stats[[name]][["mode"]]
             cont <- stats[[name]][["cont"]]
             
-            # 检查必要的统计量是否存在
-            if (is.null(mo)) stop(sprintf("Mode not found for %s variable: %s", type, name))
-            if (is.null(cont)) stop(sprintf("Cont value not found for %s variable: %s", type, name))
-            
-            if(is.na(cont)) cont <- mo
-            
             # 处理第一个缺失值
             if(is.na(x[1])) {
                 x[1] <- switch(fill1,
                     "mode" = mo,
                     "cont" = cont,
-                    "locb" = if(all(is.na(x))) cont else x[which(!is.na(x))[1]],
+                    "nocb" = if(all(is.na(x))) cont else x[which(!is.na(x))[1]],
                     "zero" = 0,
                     "mode_k" = if(all(is.na(x))) cont else Mode(x),
                     stop(sprintf("wrong fill1 method: %s for %s type", fill1, type))
@@ -1051,7 +876,7 @@ fill <- function(df, col_list, type_list, fill1_list, fill2_list, stats, time_co
                 "zero" = fill_cont(x, 0),
                 "locf" = fill_locf(x),
                 "cont" = fill_cont(x, cont),
-                "locb" = fill_locb(x),
+                "nocb" = fill_nocb(x),
                 "mode" = fill_cont(x, mo),
                 "mode_k" = if(all(is.na(x))) fill_cont(x, cont) else fill_cont(x, Mode(x)),
                 stop(sprintf("wrong fill2 method: %s for %s type", fill2, type))
@@ -1060,16 +885,11 @@ fill <- function(df, col_list, type_list, fill1_list, fill2_list, stats, time_co
         } else if(type == "bin") {
             cont <- stats[[name]][["cont"]]
             
-            # 检查必要的统计量是否存在
-            if (is.null(cont)) stop(sprintf("Cont value not found for binary variable: %s", name))
-            
-            if(is.na(cont)) cont <- 0
-            
             # 处理第一个缺失值
             if(is.na(x[1])) {
                 x[1] <- switch(fill1,
                     "cont" = cont,
-                    "locb" = if(all(is.na(x))) cont else x[which(!is.na(x))[1]],
+                    "nocb" = if(all(is.na(x))) cont else x[which(!is.na(x))[1]],
                     "zero" = 0,
                     stop(sprintf("wrong fill1 method: %s for bin type", fill1))
                 )
@@ -1080,7 +900,7 @@ fill <- function(df, col_list, type_list, fill1_list, fill2_list, stats, time_co
                 "zero" = fill_cont(x, 0),
                 "cont" = fill_cont(x, cont),
                 "locf" = fill_locf(x),
-                "locb" = fill_locb(x),
+                "nocb" = fill_nocb(x),
                 stop(sprintf("wrong fill2 method: %s for bin type", fill2))
             )
         }
@@ -1158,7 +978,7 @@ fill_locf <- function(x) {
     return(x_filled)
 }
 
-fill_locb <- function(x) {
+fill_nocb <- function(x) {
     non_na_indices <- which(!is.na(x))
     na_indices <- which(is.na(x))
     
@@ -1233,6 +1053,12 @@ get_mask <- function(df, itemid_list, time_col="time") {
     masks <- sapply(itemid_list, function(itemid) {
         as.integer(!is.na(df[[itemid]]))
     })
+    
+    # 如果 df 只有一行,确保 masks 是矩阵格式
+    if (!is.matrix(masks)) {
+        masks <- matrix(masks, nrow=1)
+        colnames(masks) <- itemid_list
+    }
     
     # 添加 mask 列到结果数据框
     result_df <- cbind(result_df, masks)
@@ -1436,4 +1262,150 @@ remove_extreme_value_long <- function(df, itemid_list, type_list, itemid_col, va
     return(df_new)
 }
 
+#' 初始化 z 转换参数
+#' 
+#' @param col_list 变量名列表
+#' @param var_dict 变量字典数据框，包含 itemid 和 value_type 列
+#' @param stats 包含每个变量统计信息的列表
+#' @return 包含每个变量(one-hot后)均值和标准差的列表
+init_z_param <- function(col_list, var_dict, stats) {
+  z_param <- list()
+  
+  for (col in col_list) {
+    # 获取变量类型
+    var_type <- var_dict$value_type[var_dict$itemid == col]
+    
+    if (var_type == "num") {
+      # 数值型变量：使用 stats 中的统计值
+      z_param[[col]] <- list(
+        mean = stats[[col]]$mean,
+        sd = stats[[col]]$sd
+      )
+    } else if (var_type %in% c("cat", "ord")) {
+      # 分类型和有序型变量：为每个 one-hot 列设置 mean=0, sd=1
+      n_categories <- length(stats[[col]]$unique_values)
+      for (i in 1:n_categories) {
+        onehot_col <- paste(col, i, sep = "___")
+        z_param[[onehot_col]] <- list(
+          mean = 0,
+          sd = 1
+        )
+      }
+    } else {  # bin 类型
+      # 二值型变量：设置 mean=0, sd=1
+      z_param[[col]] <- list(
+        mean = 0,
+        sd = 1
+      )
+    }
+  }
+  
+  return(z_param)
+}
 
+#' Z 标准化转换
+#' 
+#' @param df 输入数据框
+#' @param z_param z转换参数列表
+#' @return z标准化后的数据框
+z_trans <- function(df, z_param) {
+  # 创建结果数据框
+  result <- df
+  
+  # 对每一列进行 z 转换
+  for (col in names(df)) {
+    if (col %in% names(z_param)) {
+      mean <- z_param[[col]]$mean
+      sd <- z_param[[col]]$sd
+      # 避免除以0
+      if (sd == 0) {
+        result[[col]] <- 0
+      } else {
+        result[[col]] <- (df[[col]] - mean) / sd
+      }
+    }
+    # 不在 z_param 中的列保持原样
+  }
+  
+  return(result)
+}
+
+#' 逆向 Z 标准化转换
+#' 
+#' @param df 输入数据框
+#' @param z_param z转换参数列表
+#' @return 逆向z标准化后的数据框
+rev_z_trans <- function(df, z_param) {
+  # 创建结果数据框
+  result <- df
+  
+  # 对每一列进行逆向 z 转换
+  for (col in names(df)) {
+    if (col %in% names(z_param)) {
+      mean <- z_param[[col]]$mean
+      sd <- z_param[[col]]$sd
+      # 对于标准差为0的列，直接赋值为均值
+      if (sd == 0) {
+        result[[col]] <- mean
+      } else {
+        result[[col]] <- df[[col]] * sd + mean
+      }
+    }
+    # 不在 z_param 中的列保持原样
+  }
+  
+  return(result)
+}
+
+
+#' 将 z_param 保存到 JSON 文件
+#' 
+#' @param z_param z转换参数列表
+#' @param file_path JSON文件的保存路径
+#' @return 无返回值，保存文件到指定路径
+#' @import jsonlite
+save_z_param_to_json <- function(z_param, file_path) {
+  # 检查 z_param 是否存在
+  if (is.null(z_param)) {
+    stop("z_param 未初始化")
+  }
+  
+  # 尝试保存文件
+  tryCatch({
+    jsonlite::write_json(
+      z_param,
+      path = file_path,
+      pretty = TRUE,    # 等同于 Python 中的 indent=4
+      auto_unbox = TRUE # 避免单个值被转换为数组
+    )
+  }, error = function(e) {
+    stop(sprintf("保存 z_param 到 %s 失败: %s", file_path, e$message))
+  })
+}
+
+#' 从 JSON 文件加载 z_param
+#' 
+#' @param file_path JSON文件的路径
+#' @return z转换参数列表
+#' @import jsonlite
+load_z_param_from_json <- function(file_path) {
+  # 检查文件是否存在
+  if (!file.exists(file_path)) {
+    stop(sprintf("文件不存在: %s", file_path))
+  }
+  
+  # 尝试读取文件
+  tryCatch({
+    z_param <- jsonlite::read_json(
+      file_path,
+      simplifyVector = FALSE  # 保持列表结构
+    )
+    return(z_param)
+  }, error = function(e) {
+    if (grepl("parse error", e$message, ignore.case = TRUE)) {
+      stop(sprintf("JSON 格式不正确: %s", e$message))
+    } else {
+      stop(sprintf("读取文件 %s 失败: %s", file_path, e$message))
+    }
+  })
+}
